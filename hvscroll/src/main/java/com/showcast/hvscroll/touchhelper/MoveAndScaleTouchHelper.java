@@ -1,5 +1,6 @@
 package com.showcast.hvscroll.touchhelper;
 
+import android.graphics.PointF;
 import android.util.Log;
 import android.view.MotionEvent;
 
@@ -11,6 +12,7 @@ public class MoveAndScaleTouchHelper {
 
     private IScaleEvent mScaleEvent = null;
     private IMoveEvent mMoveEvent = null;
+    private INotificationEvent mNotificationEvent = null;
     //多点触控缩放按下坐标
     private float mScaleFirstDownX = 0f;
     private float mScaleFirstDownY = 0f;
@@ -32,6 +34,17 @@ public class MoveAndScaleTouchHelper {
     //移动过程中临时保存的移动前的偏移量
     protected float mTempDrawOffsetX = 0f;
     protected float mTempDrawOffsetY = 0f;
+    protected PointF mMoveDistancePointf = null;
+    protected PointF mNewOffsetPointf = null;
+
+    //是否已经通知开始移动
+    private boolean mIsNotifiedMoved = false;
+    //是否确实进了移动,在一次触摸事件中
+    private boolean mIsRealMoved = false;
+    //是否已经通知开始缩放
+    private boolean mIsNotifiedScaled = false;
+    //是否确实进行了缩放,在一次触摸事件中
+    private boolean mIsRealScaled = false;
     //按下事件的坐标
     private float mDownX = 0f;
     private float mDownY = 0f;
@@ -42,6 +55,8 @@ public class MoveAndScaleTouchHelper {
     private boolean mIsShowLog = false;
 
     public MoveAndScaleTouchHelper() {
+        mMoveDistancePointf = new PointF();
+        mNewOffsetPointf = new PointF();
     }
 
     /**
@@ -51,6 +66,7 @@ public class MoveAndScaleTouchHelper {
      * @param moveEvent  移动回调接口
      */
     public MoveAndScaleTouchHelper(IScaleEvent scaleEvent, IMoveEvent moveEvent) {
+        this();
         this.mScaleEvent = scaleEvent;
         this.mMoveEvent = moveEvent;
     }
@@ -143,6 +159,10 @@ public class MoveAndScaleTouchHelper {
     public void setOffsetY(float offsetY) {
         this.mDrawOffsetY = offsetY;
         this.mTempDrawOffsetY = offsetY;
+    }
+
+    public void setNoticationEvent(INotificationEvent event) {
+        this.mNotificationEvent = event;
     }
 
     /**
@@ -248,6 +268,14 @@ public class MoveAndScaleTouchHelper {
                 mDownY = 0f;
                 mUpX = 0f;
                 mUpY = 0f;
+
+                //只有通知过startMove事件才能通知finished事件
+                if (mIsNotifiedMoved && mNotificationEvent != null) {
+                    mNotificationEvent.finishedMove(mIsRealMoved);
+                    //重置所有变量
+                    mIsNotifiedMoved = false;
+                    mIsRealMoved = false;
+                }
                 break;
         }
     }
@@ -302,6 +330,15 @@ public class MoveAndScaleTouchHelper {
                     mScaleFirstUpY = 0;
                     mScaleSecondUpX = 0;
                     mScaleSecondUpY = 0;
+
+                    //当确实通知过startScaled事件时才可以回调finished事件
+                    //只会通知一次
+                    if (mIsNotifiedScaled && mNotificationEvent != null) {
+                        mNotificationEvent.finishedScale(mIsRealScaled);
+                        //重置变量
+                        mIsNotifiedScaled = false;
+                        mIsRealScaled = false;
+                    }
                     break;
             }
         } catch (IllegalArgumentException e) {
@@ -348,10 +385,18 @@ public class MoveAndScaleTouchHelper {
             mScaleEvent.onScaleFail(invalidateAction);
             return;
         }
+        //通知开始缩放,只通知一次
+        if (!mIsNotifiedScaled && mNotificationEvent != null) {
+            mNotificationEvent.startScale(newScaleRate);
+            mIsNotifiedScaled = true;
+        }
+
         //更新缩放数据
         mScaleEvent.setScaleRate(newScaleRate, isTrueSetValue);
         //缩放回调
         mScaleEvent.onScale(invalidateAction);
+        //设置本次事件确实缩放过
+        mIsRealScaled = true;
     }
 
 
@@ -372,16 +417,22 @@ public class MoveAndScaleTouchHelper {
             //新的偏移量
             float newDrawOffsetX = mTempDrawOffsetX + moveDistanceX;
             float newDrawOffsetY = mTempDrawOffsetY + moveDistanceY;
+            mMoveDistancePointf.set(moveDistanceX, moveDistanceY);
+            mNewOffsetPointf.set(newDrawOffsetX, newDrawOffsetY);
 
             //当前绘制的最左边边界坐标大于0(即边界已经显示在屏幕上时),且移动方向为向右移动
-            if (!mMoveEvent.isCanMovedOnX(moveDistanceX, newDrawOffsetX)) {
+            if (!mMoveEvent.isCanMovedOnX(mMoveDistancePointf, mNewOffsetPointf)) {
                 //保持原来的偏移量不变
                 newDrawOffsetX = mDrawOffsetX;
+            } else {
+                newDrawOffsetX = mNewOffsetPointf.x;
             }
             //当前绘制的顶端坐标大于0且移动方向为向下移动
-            if (!mMoveEvent.isCanMovedOnY(moveDistanceY, newDrawOffsetY)) {
+            if (!mMoveEvent.isCanMovedOnY(mMoveDistancePointf, mNewOffsetPointf)) {
                 //保持原来的Y轴偏移量
                 newDrawOffsetY = mDrawOffsetY;
+            } else {
+                newDrawOffsetY = mNewOffsetPointf.y;
             }
 
             //其它情况正常移动重绘
@@ -398,7 +449,16 @@ public class MoveAndScaleTouchHelper {
                     mTempDrawOffsetX = mDrawOffsetX;
                     mTempDrawOffsetY = mDrawOffsetY;
                 }
+
+                //当未通知过开始移动时,通知当前可能进行移动
+                //只通知一次
+                if (!mIsNotifiedMoved && mNotificationEvent != null) {
+                    mNotificationEvent.startMove(mDownX, mDownY);
+                    mIsNotifiedMoved = true;
+                }
                 mMoveEvent.onMove(invalidateAction);
+                //设置是否本次事件确实移动过
+                mIsRealMoved = true;
                 return true;
             } else {
                 mMoveEvent.onMoveFail(invalidateAction);
@@ -475,22 +535,22 @@ public class MoveAndScaleTouchHelper {
     public interface IMoveEvent {
 
         /**
-         * 是否可以实现X轴的移动
+         * 是否可以实现X轴的移动,负表示向右移动,正表示向左移动
          *
-         * @param moveDistanceX 当次X轴的移动距离(可正可负)
-         * @param newOffsetX    新的X轴偏移量(若允许移动的情况下,此值实际上即为上一次偏移量加上当次的移动距离)
+         * @param moveDistancePointF 本次触摸事件中移动的偏移量
+         * @param newOffsetPointF    总的偏移量,当需要改变偏移量时,直接设置pointF.x的值即可
          * @return
          */
-        public abstract boolean isCanMovedOnX(float moveDistanceX, float newOffsetX);
+        public abstract boolean isCanMovedOnX(PointF moveDistancePointF, PointF newOffsetPointF);
 
         /**
-         * 是否可以实现Y轴的移动
+         * 是否可以实现Y轴的移动,负表示向下移动,正表示向上移动
          *
-         * @param moveDistacneY 当次Y轴的移动距离(可正可负)
-         * @param newOffsetY    新的Y轴偏移量(若允许移动的情况下,此值实际上即为上一次偏移量加上当次的移动距离)
+         * @param moveDistancePointF 本次触摸事件中移动的偏移量
+         * @param newOffsetPointF    总的偏移量,当需要改变偏移量时,直接设置pointF.y的值即可
          * @return
          */
-        public abstract boolean isCanMovedOnY(float moveDistacneY, float newOffsetY);
+        public abstract boolean isCanMovedOnY(PointF moveDistancePointF, PointF newOffsetPointF);
 
         /**
          * 移动事件
@@ -506,5 +566,39 @@ public class MoveAndScaleTouchHelper {
          * @param suggetEventAction 建议处理的事件,值可能为{@link MotionEvent#ACTION_MOVE},{@link MotionEvent#ACTION_UP}
          */
         public abstract void onMoveFail(int suggetEventAction);
+    }
+
+    /**
+     * 通知事件,用于通知移动/缩放触发的事件
+     */
+    public interface INotificationEvent {
+        /**
+         * 开始移动事件,此事件在确实发生第一次移动时进行通知,只通知一次.
+         *
+         * @param mouseDownX 移动按下的点的X轴坐标值
+         * @param mouseDownY 移动按下的点的Y轴坐标值
+         */
+        public abstract void startMove(float mouseDownX, float mouseDownY);
+
+        /**
+         * 结束移动事件,只有startMove事件通知时才会回调这个事件
+         *
+         * @param hasBeenMoved 是否确实进行了移动
+         */
+        public abstract void finishedMove(boolean hasBeenMoved);
+
+        /**
+         * 开始缩放事件,此事件在确实发生第一次缩放时进行通知,只通知一次
+         *
+         * @param newScaleRate 第一次缩放时的缩放值(相对未缩放前的界面),参考{@link IScaleEvent}
+         */
+        public abstract void startScale(float newScaleRate);
+
+        /**
+         * 结束缩放事件,只有startMove事件通知时才会回调这个事件
+         *
+         * @param hasBeenScaled 是否确实进行了缩放
+         */
+        public abstract void finishedScale(boolean hasBeenScaled);
     }
 }
