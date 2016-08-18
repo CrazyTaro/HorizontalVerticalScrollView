@@ -11,20 +11,23 @@ public class AbsTableEntity {
     /**
      * default row index of row menu
      */
-    public static final int MENU_INDEX_ROW = -1;
+    public static final int FIXED_MENU_INDEX_ROW = -1;
     /**
      * default column index of column menu
      */
-    public static final int MENU_INDEX_COLUMN = -1;
+    public static final int FIXED_MENU_INDEX_COLUMN = -1;
+
+    public static final int MENU_ROW = 0;
+    public static final int MENU_COLUMN = 1;
 
     protected List<AbsCellEntity> mColumnMenuList;
     protected List<AbsCellEntity> mRowMenuList;
     protected List<AbsRowEntity> mRowList;
 
     public static final AbsTableEntity getExampleTable() {
-        List<AbsCellEntity> rowMenu = new ArrayList<>(10);
+        List<AbsCellEntity> rowMenu = new ArrayList<>(11);
         List<AbsCellEntity> columnMenu = new ArrayList<>(5);
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 11; i++) {
             AbsCellEntity newCell = new AbsCellEntity();
             newCell.setText("title-" + (1 << i));
             rowMenu.add(newCell);
@@ -36,14 +39,19 @@ public class AbsTableEntity {
 
         List<AbsRowEntity> row = new ArrayList<>(40);
         for (int i = 0; i < 35; i++) {
-            List<AbsCellEntity> cell = new ArrayList<>(10);
-            for (int j = 0; j < 10; j++) {
-                AbsCellEntity newCell = new AbsCellEntity();
-                newCell.setText("cell");
-                cell.add(newCell);
+            AbsRowEntity newRow = new AbsRowEntity(11);
+            if ((i & 1) == 1) {
+                for (int k = 1; k < 6; k++) {
+                    AbsCellEntity newCell = new AbsCellEntity(i, k * 2 - 1, "long cell");
+                    newRow.addCell(newCell, 0, 2);
+                    newRow.addCell(newCell, 0, 2);
+                }
+            } else {
+                for (int j = 0; j < 11; j++) {
+                    AbsCellEntity newCell = new AbsCellEntity(i, j, "cell");
+                    newRow.addCell(newCell);
+                }
             }
-            AbsRowEntity newRow = new AbsRowEntity();
-            newRow.setCellList(cell);
             row.add(newRow);
         }
 
@@ -69,9 +77,9 @@ public class AbsTableEntity {
 
     public int getMenuCount(int whichMenu) {
         switch (whichMenu) {
-            case 0:
+            case MENU_ROW:
                 return mRowMenuList == null ? 0 : mRowMenuList.size();
-            case 1:
+            case MENU_COLUMN:
                 return mColumnMenuList == null ? 0 : mColumnMenuList.size();
             default:
                 return 0;
