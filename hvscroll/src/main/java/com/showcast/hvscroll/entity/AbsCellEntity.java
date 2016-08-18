@@ -8,6 +8,13 @@ import com.showcast.hvscroll.draw.BaseDrawStyle;
 public class AbsCellEntity extends BaseDrawStyle {
     protected String mText;
 
+    public AbsCellEntity(String text) {
+        mText = text;
+    }
+
+    public AbsCellEntity() {
+    }
+
     public void setText(String text) {
         mText = text;
     }
