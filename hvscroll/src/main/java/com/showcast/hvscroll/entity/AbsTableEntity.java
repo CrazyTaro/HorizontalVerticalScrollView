@@ -8,6 +8,15 @@ import java.util.List;
  * Created by taro on 16/8/17.
  */
 public class AbsTableEntity {
+    /**
+     * default row index of row menu
+     */
+    public static final int MENU_INDEX_ROW = -1;
+    /**
+     * default column index of column menu
+     */
+    public static final int MENU_INDEX_COLUMN = -1;
+
     protected List<AbsCellEntity> mColumnMenuList;
     protected List<AbsCellEntity> mRowMenuList;
     protected List<AbsRowEntity> mRowList;
