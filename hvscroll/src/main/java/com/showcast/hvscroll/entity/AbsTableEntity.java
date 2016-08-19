@@ -39,29 +39,32 @@ public class AbsTableEntity {
         table.addMenu(table.newColumnMenu(0, "title-1"), MENU_COLUMN);
 
         for (int i = 0; i < 35; i++) {
+//            if ((i & 1) == 1) {
+            table.addCellAutoSpan(new AbsCellEntity(i, 0, "cell"));
             if ((i & 1) == 1) {
-                table.addCellAutoSpan(new AbsCellEntity(i, 0, "cell"));
                 for (int k = 1; k < 6; k++) {
                     AbsCellEntity newCell = new AbsCellEntity(i, k * 2 - 1, "long cell");
-                    table.addCellAutoSpan(newCell, 2, false);
-                }
-            } else {
-                for (int j = 0; j < 11; j++) {
-                    AbsCellEntity newCell = new AbsCellEntity(i, j, "cell");
-                    table.addCellWithoutSpan(newCell);
+                    //table.addCellAutoSpan(newCell, 2, false);
+                    newCell.setSpanColumnCount(2);
+                    newCell.setSpanRowCount(2);
+                    table.addCellAutoSpan(newCell);
                 }
             }
+//            } else {
+//                for (int j = 0; j < 11; j++) {
+//                    AbsCellEntity newCell = new AbsCellEntity(i, j, "cell");
+//                    table.addCellWithoutSpan(newCell);
+//                }
+//            }
         }
 
-        AbsCellEntity cell = null;
         for (int i = 0; i < table.getRowCount(); i++) {
             for (int j = 0; j < table.getColumnCount(); j++) {
-                cell = table.getCell(i, j);
+                AbsCellEntity cell = table.getCell(i, j);
                 if (cell != null) {
-                    Log.i("cell", "i=" + i + "/j=" + j + cell.toString());
+                    Log.i("draw", cell.toString());
                 }
             }
-            Log.i("row", i + "-row --------------------------------");
         }
         return table;
     }
@@ -141,7 +144,8 @@ public class AbsTableEntity {
     }
 
 
-    public void addCellAutoSpan(@NonNull AbsCellEntity cell, @NonNull Point from, @NonNull Point to) {
+    public void addCellAutoSpan(@NonNull AbsCellEntity cell, @NonNull Point
+            from, @NonNull Point to) {
         boolean isFromFirst = from.x <= to.x && from.y <= to.y;
         int rowCount, columnCount;
         Point startP, endP;
@@ -152,8 +156,8 @@ public class AbsTableEntity {
             startP = to;
             endP = from;
         }
-        rowCount = startP.x - endP.x;
-        columnCount = startP.y - endP.y;
+        rowCount = endP.x - startP.x;
+        columnCount = endP.y - startP.y;
         //update cell span count
         this.updateCellSpanCount(cell, rowCount, columnCount);
         for (int i = 0; i <= rowCount; i++) {
