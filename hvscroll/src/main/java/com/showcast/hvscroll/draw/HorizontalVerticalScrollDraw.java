@@ -9,6 +9,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -213,8 +214,17 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
             rowCount = table.getRowCount();
             columnCount = table.getColumnCount();
             canvas.clipRect(clipStartX, clipStartY, mViewParams.x, mViewParams.y);
-            for (int i = 0; i < rowCount; i++) {
-                for (int j = 0; j < columnCount; j++) {
+
+            Point[] points = this.skipUnseenCell(rowCount, columnCount, startDrawX, startDrawY,
+                    Math.abs(canvasOffsetX), Math.abs(canvasOffsetY), cellWidth, cellHeight);
+            rowCount = points[1].x - points[0].x;
+            columnCount = points[1].y - points[0].y;
+//
+//            for (int i = 0; i < rowCount; i++) {
+//                for (int j = 0; j < columnCount; j++) {
+
+            for (int i = points[0].x; i < points[1].x; i++) {
+                for (int j = points[0].y; j < points[1].y; j++) {
                     AbsCellEntity cell = table.getCell(i, j);
 
                     //try draw cell when cell exists or need to draw
@@ -227,7 +237,7 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
                         //when the cell needn't to draw we just ignore it
                         left = startDrawX + cellWidth * j + canvasOffsetX;
                         right = left + mRecyclePoint.x;
-                        top = startDrawY + canvasOffsetY;
+                        top = startDrawY + cellHeight * i + canvasOffsetY;
                         bottom = top + mRecyclePoint.y;
                         mRecycleRect.set(left, top, right, bottom);
 
@@ -242,7 +252,7 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
                     this.updateCanvasDrawWidth(mRecycleRect.right - canvasOffsetX);
                     this.updateCanvasDrawHeight(mRecycleRect.bottom - canvasOffsetY);
                 }
-                startDrawY += cellHeight;
+//                startDrawY += cellHeight;
             }
         }
     }
@@ -379,6 +389,25 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
             return false;
         }
     }
+
+    private Point[] skipUnseenCell(int maxRow, int maxColumn, int startDrawX, int startDrawY, int offsetWidth, int offsetHeight, int cellWidth, int cellHeight) {
+        Point beginPoint = new Point();
+        Point endPoint = new Point();
+
+        beginPoint.y = offsetWidth / cellWidth;
+        beginPoint.x = offsetHeight / cellHeight;
+
+        endPoint.y = beginPoint.y + mViewParams.x / cellWidth + 1;
+        endPoint.x = beginPoint.x + mViewParams.y / cellHeight + 1;
+
+        endPoint.y = endPoint.y > maxColumn ? maxColumn : endPoint.y;
+        endPoint.x = endPoint.x > maxRow ? maxRow : endPoint.x;
+
+        Log.i("draw", "begin = " + beginPoint.toString());
+        Log.i("draw", "row/column = " + (endPoint.x - beginPoint.x) + "/" + (endPoint.y - beginPoint.y));
+        return new Point[]{beginPoint, endPoint};
+    }
+
 
     /**
      * draw text to auto fit the width,when the length is too long,ellipsis will replace the unshown text
