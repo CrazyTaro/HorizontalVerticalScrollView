@@ -13,7 +13,6 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import com.showcast.hvscroll.entity.AbsCellEntity;
-import com.showcast.hvscroll.entity.AbsRowEntity;
 import com.showcast.hvscroll.entity.AbsTableEntity;
 import com.showcast.hvscroll.params.GlobalParams;
 import com.showcast.hvscroll.params.TableParams;
@@ -31,8 +30,6 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
     private View mDrawView;
 
     private AbsTableEntity mTable;
-    private BaseTableDrawStyle mRowStyle;
-    private BaseTableDrawStyle mCellStyle;
     private TableParams mTableParams;
     private GlobalParams mGlobalParams;
 
@@ -82,10 +79,6 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
         mTable = table;
     }
 
-    public void setCellDrawStyle(BaseTableDrawStyle style) {
-        mCellStyle = style;
-    }
-
     public void setParams(GlobalParams global, TableParams table) {
         mGlobalParams = global;
         mTableParams = table;
@@ -104,7 +97,7 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
         canvasStartDrawY = this.drawRowMenu(mTable, false, mMenuWidth, mMenuHeight, 0, 0, offsetX, 0, mPaint, canvas);
         canvasStartDrawX = this.drawColumnMenu(mTable, true, mMenuWidth, mMenuHeight, 0, 0, offsetX, offsetY, mPaint, canvas);
         canvasStartDrawX = this.drawFrozenColumn(mTable, 0, canvasStartDrawY, offsetX, offsetY, 0, mMenuWidth, mMenuHeight, mPaint, canvas);
-        this.drawCellInTable(mTable, canvasStartDrawX, canvasStartDrawY, 0, canvasStartDrawY, offsetX, offsetY, mPaint, canvas);
+        this.drawCellInTable(mTable, mMenuWidth, mMenuHeight, canvasStartDrawX, canvasStartDrawY, 0, canvasStartDrawY, offsetX, offsetY, mPaint, canvas);
     }
 
     private void beforeDraw(Canvas canvas, int offsetX, int offsetY) {
@@ -210,59 +203,92 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
     }
 
     //draw all cells on the table
-    private void drawCellInTable(AbsTableEntity table, int clipStartX, int clipStartY, int startDrawX, int startDrawY, int canvasOffsetX, int canvasOffsetY, Paint paint, Canvas canvas) {
+    private void drawCellInTable(AbsTableEntity table, int cellWidth, int cellHeight, int clipStartX, int clipStartY, int startDrawX, int startDrawY, int canvasOffsetX, int canvasOffsetY, Paint paint, Canvas canvas) {
         if (table != null) {
-            int rowCount = table.getRowCount();
-            canvas.clipRect(clipStartX, clipStartY, mViewParams.x, mViewParams.y);
-            for (int i = 0; i < rowCount; i++) {
-                this.drawCellInRow(table.getRow(i), i, mMenuWidth, mMenuHeight, startDrawX, startDrawY, canvasOffsetX, canvasOffsetY, paint, canvas);
-                startDrawY += mMenuHeight;
-            }
-        }
-    }
-
-
-    //draw the cells of every row
-    //TODO:need to update textSize/textColor/bgColor etc.
-    private void drawCellInRow(AbsRowEntity row, int rowIndex, int cellWidth, int cellHeight, int startDrawX, int startDrawY, int canvasOffsetX, int canvasOffsetY, Paint paint, Canvas canvas) {
-        if (row != null) {
-            int left, top, right, bottom, columnCount;
+            int left, top, right, bottom, rowCount, columnCount;
             float textDrawX, textDrawY, textSize;
 
             textSize = 60;
             paint.setTextSize(textSize);
-            columnCount = row.getColumnCount();
-            for (int i = 0; i < columnCount; i++) {
-                AbsCellEntity cell = row.getCell(i);
+            rowCount = table.getRowCount();
+            columnCount = table.getColumnCount();
+            canvas.clipRect(clipStartX, clipStartY, mViewParams.x, mViewParams.y);
+            for (int i = 0; i < rowCount; i++) {
+                for (int j = 0; j < columnCount; j++) {
+                    AbsCellEntity cell = table.getCell(i, j);
 
-                //try draw cell when cell exists or need to draw
-                if (cell != null && cell.isNeedToDraw(rowIndex, i)) {
-                    //recyclePoint save the real cell width and height
-                    this.calculateCellWidthAndHeight(mRecyclePoint, cell, cellWidth, cellHeight);
+                    //try draw cell when cell exists or need to draw
+                    if (cell != null && cell.isNeedToDraw(i, j)) {
+                        //recyclePoint save the real cell width and height
+                        this.calculateCellWidthAndHeight(mRecyclePoint, cell, cellWidth, cellHeight);
 
-                    //we mush use cellWidth for unit here
-                    //every cell's width maybe changed,but we draw cell one by one
-                    //when the cell needn't to draw we just ignore it
-                    left = startDrawX + cellWidth * i + canvasOffsetX;
-                    right = left + mRecyclePoint.x;
-                    top = startDrawY + canvasOffsetY;
-                    bottom = top + mRecyclePoint.y;
-                    mRecycleRect.set(left, top, right, bottom);
+                        //we mush use cellWidth for unit here
+                        //every cell's width maybe changed,but we draw cell one by one
+                        //when the cell needn't to draw we just ignore it
+                        left = startDrawX + cellWidth * j + canvasOffsetX;
+                        right = left + mRecyclePoint.x;
+                        top = startDrawY + canvasOffsetY;
+                        bottom = top + mRecyclePoint.y;
+                        mRecycleRect.set(left, top, right, bottom);
 
-                    //draw cell when the cell can be seen
-                    if (isDrawRectCanSeen(mRecycleRect)) {
-                        textDrawX = mRecycleRect.left;
-                        textDrawY = mRecycleRect.centerY() + textSize * 2 / 3;
-                        this.drawCell(cell, mRecycleRect, textDrawX, textDrawY, paint, canvas);
+                        //draw cell when the cell can be seen
+                        if (isDrawRectCanSeen(mRecycleRect)) {
+                            textDrawX = mRecycleRect.left;
+                            textDrawY = mRecycleRect.centerY() + textSize * 2 / 3;
+                            this.drawCell(cell, mRecycleRect, textDrawX, textDrawY, paint, canvas);
+                        }
                     }
+                    //save each row max draw width
+                    this.updateCanvasDrawWidth(mRecycleRect.right - canvasOffsetX);
+                    this.updateCanvasDrawHeight(mRecycleRect.bottom - canvasOffsetY);
                 }
+                startDrawY += cellHeight;
             }
-
-            //save each row max draw width
-            this.updateCanvasDrawWidth(mRecycleRect.right - canvasOffsetX);
-            this.updateCanvasDrawHeight(mRecycleRect.bottom - canvasOffsetY);
         }
     }
+
+
+//    //draw the cells of every row
+//    //TODO:need to update textSize/textColor/bgColor etc.
+//    private void drawCellInRow(AbsRowEntity row, int rowIndex, int cellWidth, int cellHeight, int startDrawX, int startDrawY, int canvasOffsetX, int canvasOffsetY, Paint paint, Canvas canvas) {
+//        if (row != null) {
+//            int left, top, right, bottom, columnCount;
+//            float textDrawX, textDrawY, textSize;
+//
+//            textSize = 60;
+//            paint.setTextSize(textSize);
+//            columnCount = row.getColumnCount();
+//            for (int i = 0; i < columnCount; i++) {
+//                AbsCellEntity cell = row.getCell(i);
+//
+//                //try draw cell when cell exists or need to draw
+//                if (cell != null && cell.isNeedToDraw(rowIndex, i)) {
+//                    //recyclePoint save the real cell width and height
+//                    this.calculateCellWidthAndHeight(mRecyclePoint, cell, cellWidth, cellHeight);
+//
+//                    //we mush use cellWidth for unit here
+//                    //every cell's width maybe changed,but we draw cell one by one
+//                    //when the cell needn't to draw we just ignore it
+//                    left = startDrawX + cellWidth * i + canvasOffsetX;
+//                    right = left + mRecyclePoint.x;
+//                    top = startDrawY + canvasOffsetY;
+//                    bottom = top + mRecyclePoint.y;
+//                    mRecycleRect.set(left, top, right, bottom);
+//
+//                    //draw cell when the cell can be seen
+//                    if (isDrawRectCanSeen(mRecycleRect)) {
+//                        textDrawX = mRecycleRect.left;
+//                        textDrawY = mRecycleRect.centerY() + textSize * 2 / 3;
+//                        this.drawCell(cell, mRecycleRect, textDrawX, textDrawY, paint, canvas);
+//                    }
+//                }
+//            }
+//
+//            //save each row max draw width
+//            this.updateCanvasDrawWidth(mRecycleRect.right - canvasOffsetX);
+//            this.updateCanvasDrawHeight(mRecycleRect.bottom - canvasOffsetY);
+//        }
+//    }
 
     //draw frozen column
     //TODO:set textSize/textColor etc.
@@ -279,26 +305,22 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
             paint.setTextSize(textSize);
             //traverse all row to get the which column
             for (int i = 0; i < rowCount; i++) {
-                AbsRowEntity row = table.getRow(i);
+                AbsCellEntity cell = table.getCell(i, whichColumn);
+                if (cell != null && cell.isNeedToDraw(i, whichColumn)) {
+                    this.calculateCellWidthAndHeight(mRecyclePoint, cell, cellWidth, cellHeight);
+                    left = startDrawX;
+                    right = left + mRecyclePoint.x;
+                    top = startDrawY + offsetY;
+                    bottom = top + mRecyclePoint.y;
+                    mRecycleRect.set(left, top, right, bottom);
 
-                if (row != null && whichColumn < row.getColumnCount()) {
-                    AbsCellEntity cell = row.getCell(whichColumn);
-                    if (cell != null && cell.isNeedToDraw(i, whichColumn)) {
-                        this.calculateCellWidthAndHeight(mRecyclePoint, cell, cellWidth, cellHeight);
-                        left = startDrawX;
-                        right = left + mRecyclePoint.x;
-                        top = startDrawY + offsetY;
-                        bottom = top + mRecyclePoint.y;
-                        mRecycleRect.set(left, top, right, bottom);
+                    textDrawX = mRecycleRect.left;
+                    textDrawY = mRecycleRect.centerY() + textSize * 2 / 3;
+                    this.drawCell(cell, mRecycleRect, textDrawX, textDrawY, paint, canvas);
 
-                        textDrawX = mRecycleRect.left;
-                        textDrawY = mRecycleRect.centerY() + textSize * 2 / 3;
-                        this.drawCell(cell, mRecycleRect, textDrawX, textDrawY, paint, canvas);
-
-                        //record the max width of this row
-                        maxDrawWidth = maxDrawWidth < mRecyclePoint.x ? mRecyclePoint.x : maxDrawWidth;
-                        isDraw = true;
-                    }
+                    //record the max width of this row
+                    maxDrawWidth = maxDrawWidth < mRecyclePoint.x ? mRecyclePoint.x : maxDrawWidth;
+                    isDraw = true;
                 }
 
                 //move to next row
