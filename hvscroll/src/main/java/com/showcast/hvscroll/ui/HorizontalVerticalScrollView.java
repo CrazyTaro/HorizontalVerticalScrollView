@@ -8,7 +8,6 @@ import android.view.View;
 import com.showcast.hvscroll.draw.HorizontalVerticalScrollDraw;
 import com.showcast.hvscroll.entity.AbsTableEntity;
 import com.showcast.hvscroll.params.GlobalParams;
-import com.showcast.hvscroll.params.TableParams;
 
 /**
  * Created by taro on 16/8/17.
@@ -32,7 +31,7 @@ public class HorizontalVerticalScrollView extends View {
     }
 
     private void initial() {
-        mHvDraw.setParams(new GlobalParams(), new TableParams());
+        mHvDraw.setParams(new GlobalParams());
         mHvDraw.setTable(AbsTableEntity.getExampleTable());
     }
 
