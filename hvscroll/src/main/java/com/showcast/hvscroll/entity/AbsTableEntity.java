@@ -5,9 +5,6 @@ import android.support.annotation.NonNull;
 import android.support.v4.util.SparseArrayCompat;
 import android.util.Log;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Created by taro on 16/8/17.
  */
