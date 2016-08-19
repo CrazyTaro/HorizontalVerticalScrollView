@@ -28,16 +28,8 @@ public class AbsCellEntity {
         this(row, column, text, DEFAULT_SPAN_COUNT, DEFAULT_SPAN_COUNT);
     }
 
-    public AbsCellEntity(String text, int spanRowCount, int spanColumnCount) {
-        this(DEFAULT_CELL_INDEX, DEFAULT_CELL_INDEX, text, spanRowCount, spanColumnCount);
-    }
-
-    public AbsCellEntity(String text) {
-        this(DEFAULT_CELL_INDEX, DEFAULT_CELL_INDEX, text, DEFAULT_SPAN_COUNT, DEFAULT_SPAN_COUNT);
-    }
-
-    public AbsCellEntity() {
-        this(DEFAULT_CELL_INDEX, DEFAULT_CELL_INDEX, null, DEFAULT_SPAN_COUNT, DEFAULT_SPAN_COUNT);
+    public AbsCellEntity(int row, int column) {
+        this(row, column, null, DEFAULT_SPAN_COUNT, DEFAULT_SPAN_COUNT);
     }
 
     public void setRowAndColumnIndex(int row, int column) {
@@ -113,5 +105,18 @@ public class AbsCellEntity {
 
     public void resetRowAndColumnIndex() {
         this.setRowAndColumnIndex(DEFAULT_CELL_INDEX, DEFAULT_CELL_INDEX);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder(100);
+        builder.append("{row:");
+        builder.append(mRowIndex);
+        builder.append(",column:");
+        builder.append(mColumnIndex);
+        builder.append(",text:");
+        builder.append(mText);
+        builder.append("}");
+        return builder.toString();
     }
 }
