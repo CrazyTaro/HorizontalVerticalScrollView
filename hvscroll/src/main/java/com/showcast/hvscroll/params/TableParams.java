@@ -1,66 +1,61 @@
 package com.showcast.hvscroll.params;
 
-import android.support.annotation.ColorInt;
+import android.graphics.Color;
+import android.support.annotation.IntDef;
+
+import com.showcast.hvscroll.draw.MenuDrawStyle;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 /**
  * Created by taro on 16/8/17.
  */
 public class TableParams {
-    protected int mRowMenuHeight;
-    protected int mRowMenuTextColor;
-    protected int mRowMenuBgColor;
-    protected int mRowMenuTextSize;
-    protected int mColumnMenuWidth;
-    protected int mColumnMenuTextColor;
-    protected int mColumnMenuBgColor;
-    protected int mColumnMenuTextSize;
+    public static final int DEFAULT_BACKGROUND_COLOR = Color.WHITE;
+    public static final int DEFAULT_TEXT_COLOR = Color.BLACK;
+    public static final int DEFAULT_TEXT_SIZE = 50;
+    public static final int DEFAULT_MENU_WIDTH = 80;
+    public static final int DEFAULT_MENU_HEIGHT = 60;
 
-    public boolean setRowMenuHeight(int rowMenuHeight) {
-        if (rowMenuHeight < 0) {
-            return false;
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef(value = {MENU_ROW, MENU_COLUMN})
+    public @interface MenuType {
+    }
+
+    public static final int MENU_ROW = 1;
+    public static final int MENU_COLUMN = -1;
+
+    protected MenuDrawStyle mRowMenu;
+    protected MenuDrawStyle mColumnMenu;
+
+    public TableParams() {
+        mRowMenu = new MenuDrawStyle();
+        mRowMenu = new MenuDrawStyle();
+    }
+
+    public void setIsDrawMenu(boolean isDraw, @MenuType int menuType) {
+        MenuDrawStyle menu = getMenu(menuType);
+        if (menu != null) {
+            menu.setIsDraw(isDraw);
         }
-        this.mRowMenuHeight = rowMenuHeight;
-        return true;
     }
 
-    public void setRowMenuTextColor(@ColorInt int rowMenuTextColor) {
-        this.mRowMenuTextColor = rowMenuTextColor;
-    }
-
-    public void setRowMenuBackgroundColor(@ColorInt int rowMenuBgColor) {
-        this.mRowMenuBgColor = rowMenuBgColor;
-    }
-
-    public boolean setRowMenuTextSize(int rowMenuTextSize) {
-        if (rowMenuTextSize < 0) {
-            return false;
+    public void setMenuFrozen(boolean frozenInX, boolean frozenInY, @MenuType int menuType) {
+        MenuDrawStyle menu = getMenu(menuType);
+        if (menu != null) {
+            menu.setMenuFrozen(frozenInX, frozenInY);
         }
-        this.mRowMenuTextSize = rowMenuTextSize;
-        return true;
     }
 
-    public boolean setColumnMenuWidth(int columnMenuWidth) {
-        if (columnMenuWidth < 0) {
-            return false;
+    public MenuDrawStyle getMenu(@MenuType int menuType) {
+        switch (menuType) {
+            case MENU_ROW:
+                return mRowMenu;
+            case MENU_COLUMN:
+                return mColumnMenu;
+            default:
+                return null;
         }
-        this.mColumnMenuWidth = columnMenuWidth;
-        return true;
     }
-
-    public void setColumnMenuTextColor(@ColorInt int columnMenuTextColor) {
-        this.mColumnMenuTextColor = columnMenuTextColor;
-    }
-
-    public void setColumnMenuBackgroundColor(@ColorInt int columnMenuBgColor) {
-        this.mColumnMenuBgColor = columnMenuBgColor;
-    }
-
-    public boolean setColumnMenuTextSize(int columnMenuTextSize) {
-        if (columnMenuTextSize < 0) {
-            return false;
-        }
-        this.mColumnMenuTextSize = columnMenuTextSize;
-        return true;
-    }
-
 }
