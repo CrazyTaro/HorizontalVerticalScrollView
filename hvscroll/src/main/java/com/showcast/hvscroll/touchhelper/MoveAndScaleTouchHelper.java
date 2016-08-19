@@ -420,6 +420,12 @@ public class MoveAndScaleTouchHelper {
             mMoveDistancePointf.set(moveDistanceX, moveDistanceY);
             mNewOffsetPointf.set(newDrawOffsetX, newDrawOffsetY);
 
+            //当未通知过开始移动时,通知当前可能进行移动
+            //只通知一次
+            if (!mIsNotifiedMoved && mNotificationEvent != null) {
+                mNotificationEvent.startMove(mDownX, mDownY);
+                mIsNotifiedMoved = true;
+            }
             //当前绘制的最左边边界坐标大于0(即边界已经显示在屏幕上时),且移动方向为向右移动
             if (!mMoveEvent.isCanMovedOnX(mMoveDistancePointf, mNewOffsetPointf)) {
                 //保持原来的偏移量不变
@@ -448,13 +454,6 @@ public class MoveAndScaleTouchHelper {
                     //将此次的新偏移量保存为临时数据后续拖动时可使用
                     mTempDrawOffsetX = mDrawOffsetX;
                     mTempDrawOffsetY = mDrawOffsetY;
-                }
-
-                //当未通知过开始移动时,通知当前可能进行移动
-                //只通知一次
-                if (!mIsNotifiedMoved && mNotificationEvent != null) {
-                    mNotificationEvent.startMove(mDownX, mDownY);
-                    mIsNotifiedMoved = true;
                 }
                 mMoveEvent.onMove(invalidateAction);
                 //设置是否本次事件确实移动过
@@ -573,7 +572,8 @@ public class MoveAndScaleTouchHelper {
      */
     public interface INotificationEvent {
         /**
-         * 开始移动事件,此事件在确实发生第一次移动时进行通知,只通知一次.
+         * 开始移动事件,此事件在即将可能发生第一次移动时进行通知,只通知一次<br/>
+         * 并且在{@link IMoveEvent#isCanMovedOnX(PointF, PointF)} 与 {@link IMoveEvent#isCanMovedOnY(PointF, PointF)} 这两个方法之前进行回调,确保可以通过此事件从而对移动方向的确定
          *
          * @param mouseDownX 移动按下的点的X轴坐标值
          * @param mouseDownY 移动按下的点的Y轴坐标值
