@@ -36,9 +36,14 @@ public class HorizontalVerticalScrollView extends View {
     private void initial() {
         MenuParams menuParams = new MenuParams();
         menuParams.setIsDrawRowMenu(true);
+        menuParams.setIsDrawColumn(true);
         menuParams.addFrozenMenuIndex(0, Constant.MENU_ROW);
-        menuParams.getMenuSetting(Constant.MENU_ROW).setMenuFrozen(false, true);
-        mHvDraw.setParams(new GlobalParams(), menuParams, new CellParams());
+//        menuParams.getSetting(Constant.MENU_ROW).setMenuFrozen(false, true);
+//        menuParams.getSetting(Constant.MENU_COLUMN).setMenuFrozen(true, false);
+        CellParams cellParams = new CellParams();
+        cellParams.getSetting(Constant.LINE_COLUMN).addFrozenItemIndex(0);
+        cellParams.getSetting(Constant.LINE_ROW).addFrozenItemIndex(0);
+        mHvDraw.setParams(new GlobalParams(), menuParams, cellParams);
         mHvDraw.setTable(AbsTableEntity.getExampleTable());
     }
 
