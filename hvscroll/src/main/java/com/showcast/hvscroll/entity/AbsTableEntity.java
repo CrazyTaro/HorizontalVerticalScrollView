@@ -23,13 +23,11 @@ public class AbsTableEntity {
         AbsTableEntity table = new AbsTableEntity(35, 11);
 
         for (int i = 0; i < 11; i++) {
-            AbsCellEntity menu = table.newRowMenu(i, "title-" + (i << i));
-            table.addMenu(menu, Constant.MENU_ROW);
+            table.addMenu(table.newRowMenu(i, "title-" + i), Constant.MENU_ROW);
         }
 
-//        table.addMenu(table.newColumnMenu(0, "title-1"), MENU_COLUMN);
-
         for (int i = 0; i < 35; i++) {
+            table.addMenu(table.newColumnMenu(i, "title-1" + i), Constant.MENU_COLUMN);
 //            if ((i & 1) == 1) {
 //            table.addCellAutoSpan(new AbsCellEntity(i, 0, "cell"));
 //            if ((i & 1) == 1) {
@@ -43,7 +41,7 @@ public class AbsTableEntity {
 //            }
 //            } else {
             for (int j = 0; j < 11; j++) {
-                AbsCellEntity newCell = new AbsCellEntity(i, j, "cell");
+                AbsCellEntity newCell = new AbsCellEntity(i, j, i + "-" + j);
                 table.addCellWithoutSpan(newCell);
             }
 //            }
