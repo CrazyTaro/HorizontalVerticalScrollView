@@ -1,6 +1,7 @@
 package com.showcast.hvscroll.touchhelper;
 
 import android.graphics.PointF;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.MotionEvent;
 
@@ -522,9 +523,9 @@ public class MoveAndScaleTouchHelper {
         /**
          * 无法进行缩放事件,可能某些条件不满足,如不允许缩放等
          *
-         * @param suggetEventAction 建议处理的事件,值可能为{@link MotionEvent#ACTION_MOVE},{@link MotionEvent#ACTION_UP}
+         * @param suggestEventAction 建议处理的事件,值可能为{@link MotionEvent#ACTION_MOVE},{@link MotionEvent#ACTION_UP}
          */
-        public abstract void onScaleFail(int suggetEventAction);
+        public abstract void onScaleFail(int suggestEventAction);
     }
 
 
@@ -540,7 +541,7 @@ public class MoveAndScaleTouchHelper {
          * @param newOffsetPointF    总的偏移量,当需要改变偏移量时,直接设置pointF.x的值即可
          * @return
          */
-        public abstract boolean isCanMovedOnX(PointF moveDistancePointF, PointF newOffsetPointF);
+        public abstract boolean isCanMovedOnX(@NonNull PointF moveDistancePointF, @NonNull PointF newOffsetPointF);
 
         /**
          * 是否可以实现Y轴的移动,负表示向下移动,正表示向上移动
@@ -549,7 +550,7 @@ public class MoveAndScaleTouchHelper {
          * @param newOffsetPointF    总的偏移量,当需要改变偏移量时,直接设置pointF.y的值即可
          * @return
          */
-        public abstract boolean isCanMovedOnY(PointF moveDistancePointF, PointF newOffsetPointF);
+        public abstract boolean isCanMovedOnY(@NonNull PointF moveDistancePointF, @NonNull PointF newOffsetPointF);
 
         /**
          * 移动事件
