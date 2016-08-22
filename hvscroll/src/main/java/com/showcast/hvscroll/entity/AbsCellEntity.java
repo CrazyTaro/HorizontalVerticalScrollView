@@ -1,20 +1,19 @@
 package com.showcast.hvscroll.entity;
 
+import com.showcast.hvscroll.params.Constant;
+
 /**
  * Created by taro on 16/8/17.
  */
 public class AbsCellEntity {
-    public static final int DEFAULT_SPAN_COUNT = 1;
-    public static final int DEFAULT_CELL_INDEX = -1;
-
-    protected int mRowIndex = DEFAULT_CELL_INDEX;
-    protected int mColumnIndex = DEFAULT_CELL_INDEX;
+    protected int mRowIndex = Constant.DEFAULT_CELL_INDEX;
+    protected int mColumnIndex = Constant.DEFAULT_CELL_INDEX;
     protected String mText;
     protected boolean mIsNeedToDraw;
     protected int mWidth;
     protected int mHeight;
-    protected int mSpanRowCount = DEFAULT_SPAN_COUNT;
-    protected int mSpanColumnCount = DEFAULT_SPAN_COUNT;
+    protected int mSpanRowCount = Constant.DEFAULT_SPAN_COUNT;
+    protected int mSpanColumnCount = Constant.DEFAULT_SPAN_COUNT;
 
     public AbsCellEntity(int row, int column, String text, int spanRowCount, int spanColumnCount) {
         mRowIndex = row;
@@ -25,11 +24,11 @@ public class AbsCellEntity {
     }
 
     public AbsCellEntity(int row, int column, String text) {
-        this(row, column, text, DEFAULT_SPAN_COUNT, DEFAULT_SPAN_COUNT);
+        this(row, column, text, Constant.DEFAULT_SPAN_COUNT, Constant.DEFAULT_SPAN_COUNT);
     }
 
     public AbsCellEntity(int row, int column) {
-        this(row, column, null, DEFAULT_SPAN_COUNT, DEFAULT_SPAN_COUNT);
+        this(row, column, null, Constant.DEFAULT_SPAN_COUNT, Constant.DEFAULT_SPAN_COUNT);
     }
 
     public void setRowAndColumnIndex(int row, int column) {
@@ -54,13 +53,13 @@ public class AbsCellEntity {
     }
 
     public void setSpanRowCount(int spanCount) {
-        if (spanCount >= DEFAULT_SPAN_COUNT) {
+        if (spanCount >= Constant.DEFAULT_SPAN_COUNT) {
             mSpanRowCount = spanCount;
         }
     }
 
     public void setSpanColumnCount(int spanCount) {
-        if (spanCount >= DEFAULT_SPAN_COUNT) {
+        if (spanCount >= Constant.DEFAULT_SPAN_COUNT) {
             mSpanColumnCount = spanCount;
         }
     }
@@ -96,7 +95,7 @@ public class AbsCellEntity {
     public boolean isNeedToDraw(int rowIndex, int columnIndex) {
         //when row and column index is the same,draw the cell
         //else maybe the cell merge with other cells
-        if (mRowIndex > DEFAULT_CELL_INDEX && mColumnIndex > DEFAULT_CELL_INDEX) {
+        if (mRowIndex > Constant.DEFAULT_CELL_INDEX && mColumnIndex > Constant.DEFAULT_CELL_INDEX) {
             return mRowIndex == rowIndex && mColumnIndex == columnIndex;
         } else {
             return true;
@@ -104,7 +103,7 @@ public class AbsCellEntity {
     }
 
     public void resetRowAndColumnIndex() {
-        this.setRowAndColumnIndex(DEFAULT_CELL_INDEX, DEFAULT_CELL_INDEX);
+        this.setRowAndColumnIndex(Constant.DEFAULT_CELL_INDEX, Constant.DEFAULT_CELL_INDEX);
     }
 
     @Override

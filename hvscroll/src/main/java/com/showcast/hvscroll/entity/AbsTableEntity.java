@@ -2,25 +2,15 @@ package com.showcast.hvscroll.entity;
 
 import android.graphics.Point;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.util.SparseArrayCompat;
-import android.util.Log;
+
+import com.showcast.hvscroll.params.Constant;
 
 /**
  * Created by taro on 16/8/17.
  */
 public class AbsTableEntity {
-    /**
-     * default row index of row menu
-     */
-    public static final int FIXED_MENU_INDEX_ROW = -1;
-    /**
-     * default column index of column menu
-     */
-    public static final int FIXED_MENU_INDEX_COLUMN = -1;
-
-    public static final int MENU_ROW = 0;
-    public static final int MENU_COLUMN = 1;
-
     protected int mRowCount = 0;
     protected int mColumnCount = 0;
     protected int mEstimatedRowCount = 20;
@@ -34,38 +24,39 @@ public class AbsTableEntity {
 
         for (int i = 0; i < 11; i++) {
             AbsCellEntity menu = table.newRowMenu(i, "title-" + (i << i));
-            table.addMenu(menu, MENU_ROW);
+            table.addMenu(menu, Constant.MENU_ROW);
         }
-        table.addMenu(table.newColumnMenu(0, "title-1"), MENU_COLUMN);
+
+//        table.addMenu(table.newColumnMenu(0, "title-1"), MENU_COLUMN);
 
         for (int i = 0; i < 35; i++) {
 //            if ((i & 1) == 1) {
-            table.addCellAutoSpan(new AbsCellEntity(i, 0, "cell"));
-            if ((i & 1) == 1) {
-                for (int k = 1; k < 6; k++) {
-                    AbsCellEntity newCell = new AbsCellEntity(i, k * 2 - 1, "long cell");
-                    //table.addCellAutoSpan(newCell, 2, false);
-                    newCell.setSpanColumnCount(2);
-                    newCell.setSpanRowCount(2);
-                    table.addCellAutoSpan(newCell);
-                }
-            }
-//            } else {
-//                for (int j = 0; j < 11; j++) {
-//                    AbsCellEntity newCell = new AbsCellEntity(i, j, "cell");
-//                    table.addCellWithoutSpan(newCell);
+//            table.addCellAutoSpan(new AbsCellEntity(i, 0, "cell"));
+//            if ((i & 1) == 1) {
+//                for (int k = 1; k < 6; k++) {
+//                    AbsCellEntity newCell = new AbsCellEntity(i, k * 2 - 1, "long cell");
+//                    //table.addCellAutoSpan(newCell, 2, false);
+//                    newCell.setSpanColumnCount(2);
+//                    newCell.setSpanRowCount(2);
+//                    table.addCellAutoSpan(newCell);
 //                }
+//            }
+//            } else {
+            for (int j = 0; j < 11; j++) {
+                AbsCellEntity newCell = new AbsCellEntity(i, j, "cell");
+                table.addCellWithoutSpan(newCell);
+            }
 //            }
         }
 
-        for (int i = 0; i < table.getRowCount(); i++) {
-            for (int j = 0; j < table.getColumnCount(); j++) {
-                AbsCellEntity cell = table.getCell(i, j);
-                if (cell != null) {
-                    Log.i("draw", cell.toString());
-                }
-            }
-        }
+//        for (int i = 0; i < table.getRowCount(); i++) {
+//            for (int j = 0; j < table.getColumnCount(); j++) {
+//                AbsCellEntity cell = table.getCell(i, j);
+//                if (cell != null) {
+//                    Log.i("draw", cell.toString());
+//                }
+//            }
+//        }
         return table;
     }
 
@@ -81,53 +72,53 @@ public class AbsTableEntity {
         mColumnMenuList = new SparseArrayCompat<>(mEstimatedRowCount);
     }
 
-    public void precreateMenu(int which, int menulCount) {
+    public void precreateMenu(@Constant.MenuType int which, int menulCount) {
         switch (which) {
-            case MENU_ROW:
+            case Constant.MENU_ROW:
                 this.checkIfRowMenuCreate(menulCount);
                 break;
-            case MENU_COLUMN:
+            case Constant.MENU_COLUMN:
                 this.checkIfColumnMenuCreate(menulCount);
                 break;
         }
     }
 
     public AbsCellEntity newColumnMenu(int row, String text) {
-        return new AbsCellEntity(row, FIXED_MENU_INDEX_COLUMN, text);
+        return new AbsCellEntity(row, Constant.FIXED_MENU_INDEX_COLUMN, text);
     }
 
     public AbsCellEntity newRowMenu(int column, String text) {
-        return new AbsCellEntity(FIXED_MENU_INDEX_ROW, column, text);
+        return new AbsCellEntity(Constant.FIXED_MENU_INDEX_ROW, column, text);
     }
 
-    public void addMenu(@NonNull AbsCellEntity menu, int whichMenu) {
+    public void addMenu(@NonNull AbsCellEntity menu, @Constant.MenuType int whichMenu) {
         switch (whichMenu) {
-            case MENU_ROW:
+            case Constant.MENU_ROW:
                 mRowMenuList.put(menu.getColumnIndex(), menu);
                 break;
-            case MENU_COLUMN:
+            case Constant.MENU_COLUMN:
                 mColumnMenuList.put(menu.getRowIndex(), menu);
                 break;
         }
     }
 
-    public void addMenu(AbsCellEntity menu, int rowIndex, int columnIndex, int whichMenu) {
+    public void addMenu(AbsCellEntity menu, int rowIndex, int columnIndex, @Constant.MenuType int whichMenu) {
         switch (whichMenu) {
-            case MENU_ROW:
+            case Constant.MENU_ROW:
                 mRowMenuList.put(columnIndex, menu);
                 break;
-            case MENU_COLUMN:
+            case Constant.MENU_COLUMN:
                 mColumnMenuList.put(rowIndex, menu);
                 break;
         }
     }
 
-    public void clearMenu(int which) {
+    public void clearMenu(@Constant.MenuType int which) {
         switch (which) {
-            case MENU_ROW:
+            case Constant.MENU_ROW:
                 mRowMenuList.clear();
                 break;
-            case MENU_COLUMN:
+            case Constant.MENU_COLUMN:
                 mColumnMenuList.clear();
                 break;
         }
@@ -221,12 +212,12 @@ public class AbsTableEntity {
         int rowIndex = cell.getRowIndex();
         int columnIndex = cell.getColumnIndex();
         //if the cell not span with any other cells,just put it only
-        if (spanRow == AbsCellEntity.DEFAULT_SPAN_COUNT && spanColumn == AbsCellEntity.DEFAULT_SPAN_COUNT) {
+        if (spanRow == Constant.DEFAULT_SPAN_COUNT && spanColumn == Constant.DEFAULT_SPAN_COUNT) {
             this.addCellWithoutSpan(cell);
-        } else if (spanRow == AbsCellEntity.DEFAULT_SPAN_COUNT) {
+        } else if (spanRow == Constant.DEFAULT_SPAN_COUNT) {
             //if the cell span with row
             this.addCellAutoSpan(cell, columnIndex, columnIndex + spanColumn, false);
-        } else if (spanColumn == AbsCellEntity.DEFAULT_SPAN_COUNT) {
+        } else if (spanColumn == Constant.DEFAULT_SPAN_COUNT) {
             //if the cell span with column
             this.addCellAutoSpan(cell, rowIndex, rowIndex + spanRow, true);
         } else {
@@ -281,11 +272,11 @@ public class AbsTableEntity {
         return mColumnCount;
     }
 
-    public int getMenuCount(int whichMenu) {
+    public int getMenuCount(@Constant.MenuType int whichMenu) {
         switch (whichMenu) {
-            case MENU_ROW:
+            case Constant.MENU_ROW:
                 return mRowMenuList == null ? 0 : mRowMenuList.size();
-            case MENU_COLUMN:
+            case Constant.MENU_COLUMN:
                 return mColumnMenuList == null ? 0 : mColumnMenuList.size();
             default:
                 return 0;
@@ -342,15 +333,15 @@ public class AbsTableEntity {
         int spanRow = cell.getSpanRowCount();
         int spanColumn = cell.getSpanColumnCount();
         //if the cell span with no one cell,just remove it only
-        if (spanRow == AbsCellEntity.DEFAULT_SPAN_COUNT && spanColumn == AbsCellEntity.DEFAULT_SPAN_COUNT) {
+        if (spanRow == Constant.DEFAULT_SPAN_COUNT && spanColumn == Constant.DEFAULT_SPAN_COUNT) {
             this.getRow(rowIndex).remove(columnIndex);
-        } else if (spanRow == AbsCellEntity.DEFAULT_SPAN_COUNT) {
+        } else if (spanRow == Constant.DEFAULT_SPAN_COUNT) {
             //if the cell span with column only
             SparseArrayCompat<AbsCellEntity> row = this.getRow(rowIndex);
             for (int i = 0; i < spanColumn; i++) {
                 row.remove(i + columnIndex);
             }
-        } else if (spanColumn == AbsCellEntity.DEFAULT_SPAN_COUNT) {
+        } else if (spanColumn == Constant.DEFAULT_SPAN_COUNT) {
             //if the cell span with row only
             SparseArrayCompat<AbsCellEntity> row = null;
             for (int i = 0; i < spanRow; i++) {
@@ -369,7 +360,7 @@ public class AbsTableEntity {
         }
     }
 
-    private AbsCellEntity putCell(int rowIndex, int columnIndex, AbsCellEntity cell) {
+    private AbsCellEntity putCell(int rowIndex, int columnIndex, @Nullable AbsCellEntity cell) {
         AbsCellEntity oldCell = this.getRow(rowIndex).get(columnIndex);
         this.getRow(rowIndex).put(columnIndex, cell);
         return oldCell;
@@ -381,7 +372,7 @@ public class AbsTableEntity {
     }
 
     private void updateCellSpanCount(@NonNull AbsCellEntity cell, int spanRow, int spanColumn) {
-        cell.setSpanRowCount(spanRow + AbsCellEntity.DEFAULT_SPAN_COUNT);
-        cell.setSpanColumnCount(spanColumn + AbsCellEntity.DEFAULT_SPAN_COUNT);
+        cell.setSpanRowCount(spanRow + Constant.DEFAULT_SPAN_COUNT);
+        cell.setSpanColumnCount(spanColumn + Constant.DEFAULT_SPAN_COUNT);
     }
 }
