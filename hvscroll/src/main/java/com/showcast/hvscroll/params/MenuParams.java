@@ -58,6 +58,16 @@ public class MenuParams extends BaseParams {
         super.setDefaultDrawStyle(style);
     }
 
+    @Override
+    public MenuSetting getSetting(@Constant.MenuType int whichMenu) {
+        MenuSetting setting = mMenuSettings[whichMenu];
+        if (setting == null) {
+            setting = new MenuSetting();
+            mMenuSettings[whichMenu] = setting;
+        }
+        return setting;
+    }
+
     public void setIsDrawRowMenu(boolean isDraw) {
         mIsDrawRowMenu = isDraw;
     }
@@ -80,94 +90,15 @@ public class MenuParams extends BaseParams {
             setting = new MenuSetting();
             mMenuSettings[whichMenu] = setting;
         }
-        return setting.addFrozenMenuIndex(index);
+        return setting.addFrozenItemIndex(index);
     }
 
-    public MenuSetting getMenuSetting(@Constant.MenuType int whichMenu) {
-        MenuSetting setting = mMenuSettings[whichMenu];
-        if (setting == null) {
-            setting = new MenuSetting();
-            mMenuSettings[whichMenu] = setting;
-        }
-        return setting;
-    }
-
-    public static class MenuSetting {
+    public static class MenuSetting extends Setting {
         private boolean mIsMenuFrozenX = false;
         private boolean mIsMenuFrozenY = false;
-        private TreeSet<Integer> mFrozenMenus;
 
-        private MenuSetting() {
-        }
-
-        public boolean addFrozenMenuIndex(int index) {
-            if (index < 0) {
-                return false;
-            } else {
-                if (mFrozenMenus == null) {
-                    mFrozenMenus = new TreeSet<>();
-                }
-                mFrozenMenus.add(index);
-                return true;
-            }
-        }
-
-        public boolean isFrozenMenu(int index) {
-            return mFrozenMenus != null && mFrozenMenus.contains(index);
-        }
-
-        public int getFrozenMenuSize() {
-            return mFrozenMenus == null ? 0 : mFrozenMenus.size();
-        }
-
-        public void removeFrzonMenuIndex(int index) {
-            if (mFrozenMenus != null) {
-                mFrozenMenus.remove(index);
-            }
-        }
-
-        public void clearFrozenMenuIndex() {
-            if (mFrozenMenus != null) {
-                mFrozenMenus.clear();
-            }
-        }
-
-        public int getLastFrozenMenuIndex() {
-            return mFrozenMenus == null ? -1 : mFrozenMenus.last();
-        }
-
-        public int getFirstFrozenMenuIndex() {
-            return mFrozenMenus == null ? -1 : mFrozenMenus.first();
-        }
-
-        public SortedSet<Integer> getSetLessThan(int index) {
-            if (index < 0) {
-                return null;
-            } else {
-                return mFrozenMenus == null ? null : mFrozenMenus.headSet(index);
-            }
-        }
-
-        public SortedSet<Integer> getSetGreaterThan(int index) {
-            if (index < 0) {
-                return null;
-            } else {
-                return mFrozenMenus == null ? null : mFrozenMenus.tailSet(index);
-            }
-        }
-
-        @NonNull
-        public int[] getValueFrozenMenu() {
-            if (mFrozenMenus == null || mFrozenMenus.size() <= 0) {
-                return new int[0];
-            } else {
-                int[] result = new int[mFrozenMenus.size()];
-                Iterator<Integer> it = mFrozenMenus.iterator();
-                for (int i = 0; i < result.length; i++) {
-                    result[i] = it.next();
-                }
-                return result;
-            }
+        protected MenuSetting() {
+            super();
         }
 
         public void setMenuFrozen(boolean frozenInX, boolean frozenInY) {

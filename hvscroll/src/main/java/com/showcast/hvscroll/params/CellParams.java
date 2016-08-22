@@ -59,17 +59,8 @@ public class CellParams extends BaseParams {
         super.setDefaultDrawStyle(style);
     }
 
-
-    public boolean addFrozenLineIndex(int index, @Constant.LineType int whichLines) {
-        LineSetting setting = mLineSettings[whichLines];
-        if (setting == null) {
-            setting = new LineSetting();
-            mLineSettings[whichLines] = setting;
-        }
-        return setting.addFrozenLineIndex(index);
-    }
-
-    public LineSetting getLineSetting(@Constant.LineType int whichLines) {
+    @Override
+    public LineSetting getSetting(@Constant.LineType int whichLines) {
         LineSetting setting = mLineSettings[whichLines];
         if (setting == null) {
             setting = new LineSetting();
@@ -78,82 +69,21 @@ public class CellParams extends BaseParams {
         return setting;
     }
 
-    public static class LineSetting {
+    public boolean addFrozenLineIndex(int index, @Constant.LineType int whichLines) {
+        LineSetting setting = mLineSettings[whichLines];
+        if (setting == null) {
+            setting = new LineSetting();
+            mLineSettings[whichLines] = setting;
+        }
+        return setting.addFrozenItemIndex(index);
+    }
+
+    public static class LineSetting extends Setting {
         private int mOffsetLines = 0;
         private int mOffsetLength = 0;
-        private TreeSet<Integer> mFrozenLines;
 
-        private LineSetting() {
-        }
-
-        public boolean addFrozenLineIndex(int index) {
-            if (index < 0) {
-                return false;
-            } else {
-                if (mFrozenLines == null) {
-                    mFrozenLines = new TreeSet<>();
-                }
-                mFrozenLines.add(index);
-                return true;
-            }
-        }
-
-        public boolean isFrozenLine(int index) {
-            return mFrozenLines != null && mFrozenLines.contains(index);
-        }
-
-        public int getFrozenLineSize() {
-            return mFrozenLines == null ? 0 : mFrozenLines.size();
-        }
-
-        public void removeFrzonLineIndex(int index) {
-            if (mFrozenLines != null) {
-                mFrozenLines.remove(index);
-            }
-        }
-
-        public void clearFrozenLineIndex() {
-            if (mFrozenLines != null) {
-                mFrozenLines.clear();
-            }
-        }
-
-        public int getLastFrozenLineIndex() {
-            return mFrozenLines == null ? -1 : mFrozenLines.last();
-        }
-
-        public int getFirstFrozenLineIndex() {
-            return mFrozenLines == null ? -1 : mFrozenLines.first();
-        }
-
-        public SortedSet<Integer> getSetLessThan(int index) {
-            if (index < 0) {
-                return null;
-            } else {
-                return mFrozenLines == null ? null : mFrozenLines.headSet(index);
-            }
-        }
-
-        public SortedSet<Integer> getSetGreaterThan(int index) {
-            if (index < 0) {
-                return null;
-            } else {
-                return mFrozenLines == null ? null : mFrozenLines.tailSet(index);
-            }
-        }
-
-        @NonNull
-        public int[] getValueFrozenLine() {
-            if (mFrozenLines == null || mFrozenLines.size() <= 0) {
-                return new int[0];
-            } else {
-                int[] result = new int[mFrozenLines.size()];
-                Iterator<Integer> it = mFrozenLines.iterator();
-                for (int i = 0; i < result.length; i++) {
-                    result[i] = it.next();
-                }
-                return result;
-            }
+        protected LineSetting() {
+            super();
         }
 
         public void setOffsetLines(int lines) {
