@@ -1,20 +1,35 @@
 package com.showcast.hvscroll.params;
 
+import android.support.annotation.NonNull;
+
+import com.showcast.hvscroll.draw.BaseDrawStyle;
+
+import java.util.Map;
+
 /**
  * Created by taro on 16/8/19.
  */
 public class BaseParams {
+    public static final int DEFAULT_WIDTH = 200;
+    public static final int DEFAULT_HEIGHT = 80;
+
+    protected int mWidth;
+    protected int mHeight;
+    protected Map<String, BaseDrawStyle> mStyleMap;
+    protected BaseDrawStyle mDefaultDrawStyle;
+
     public BaseParams() {
+        this(DEFAULT_WIDTH, DEFAULT_HEIGHT);
     }
 
     public BaseParams(int width, int height) {
-        super();
         this.setWidth(width);
         this.setHeight(height);
+        this.initialConstructor();
     }
 
-    public void setIsDraw(boolean isDraw) {
-        mIsDraw = isDraw;
+    protected void initialConstructor() {
+
     }
 
     public boolean setWidth(int width) {
@@ -43,12 +58,31 @@ public class BaseParams {
         return mHeight;
     }
 
-    public boolean isDraw() {
-        return mIsDraw;
+    public BaseDrawStyle addNewDrawStyle(@NonNull String tag, @NonNull BaseDrawStyle drawStyle) {
+        return mStyleMap.put(tag, drawStyle);
     }
 
-    protected int mWidth;
-    protected int mHeight;
+    public BaseDrawStyle removeDrawStyle(String tag) {
+        return mStyleMap.remove(tag);
+    }
 
-    protected boolean mIsDraw;
+    public boolean isContains(String tag) {
+        return mStyleMap.containsKey(tag);
+    }
+
+    public BaseDrawStyle getDrawStyle(String tag) {
+        return mStyleMap.get(tag);
+    }
+
+    public void clearDrawStyles() {
+        mStyleMap.clear();
+    }
+
+    public void setDefaultDrawStyle(@NonNull BaseDrawStyle style) {
+        mDefaultDrawStyle = style;
+    }
+
+    public BaseDrawStyle getDefaultDrawStyle() {
+        return mDefaultDrawStyle;
+    }
 }
