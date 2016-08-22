@@ -54,6 +54,8 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
     private Rect mRecycleRect;
     private Point mViewParams;
     private Point mRecyclePoint;
+    private Point mRowPoint;
+    private Point mColumnPoint;
     private Paint mPaint;
 
     public HorizontalVerticalScrollDraw(@NonNull View drawView) {
@@ -70,6 +72,8 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
         mTouchHelper.setIsEnableDoubleClick(false);
         mRecycleRect = new Rect();
         mRecyclePoint = new Point();
+        mRowPoint = new Point();
+        mColumnPoint = new Point();
         mPaint = new Paint();
 
         mGlobalParams = new GlobalParams();
@@ -135,23 +139,20 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
         }
         int offsetX = (int) mMsActionHelper.getDrawOffsetX();
         int offsetY = (int) mMsActionHelper.getDrawOffsetY();
-        int canvasStartDrawY = 0;
-        int canvasStartDrawX = 0;
 
         this.beforeDraw(canvas, offsetX, offsetY);
         if (mMenuParams != null) {
             //draw row menu if necessarily
             if (mMenuParams.isDrawRowMenu()) {
-                this.drawRowMenu(mTable, mMenuParams, 0, 0, offsetX, 0, mPaint, canvas);
+                this.drawRowMenu(mTable, mMenuParams, mRowPoint, 0, 0, offsetX, offsetY, mPaint, canvas);
             }
             //draw column menu if necessarily
             if (mMenuParams.isDrawColumnMenu()) {
-                this.drawColumnMenu(mTable, mMenuParams, 0, 0, offsetX, offsetY, mPaint, canvas);
+                this.drawColumnMenu(mTable, mMenuParams, mColumnPoint, 0, 0, offsetX, offsetY, mPaint, canvas);
             }
         }
-        //TODO: set startDrawY after draw menu
-        this.drawFrozenColumn(mTable, mCellParams, 0, mCellParams.getHeight(), offsetX, offsetY, 0, mPaint, canvas);
-        this.drawCellInTable(mTable, mCellParams, mCellParams.getWidth(), mCellParams.getHeight(), 0, canvasStartDrawY, offsetX, offsetY, mPaint, canvas);
+        //TODO: return the menu draw width or height to set the cell draw area
+        this.drawCellInTable(mTable, mCellParams, mColumnPoint.x, mRowPoint.x, mColumnPoint.y, mRowPoint.y, offsetX, offsetY, mPaint, canvas);
         this.drawAnyWidthMask(mTable, mMenuParams, mCellParams, mMaskWidth, offsetX, offsetY, mPaint, canvas);
     }
 
@@ -159,6 +160,8 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
         if (mViewParams == null) {
             mViewParams = this.getViewWidthHeight(mDrawView, mViewParams);
         }
+        mColumnPoint.set(0, 0);
+        mRowPoint.set(0, 0);
         canvas.drawColor(mGlobalParams.getCanvasBgColor());
     }
 
@@ -167,19 +170,12 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
 
 
     //draw the row menu, menu will fix on the top ,for now
-    private void drawRowMenu(AbsTableEntity table, MenuParams params, int startDrawX, int startDrawY, int offsetX, int offsetY, Paint paint, Canvas canvas) {
-        int left, top, right, bottom, width, height, drawOffsetX, drawOffsetY;
-        float textDrawX = 0;
-        float textDrawY = 0;
-        float textSize = params.getDefaultDrawStyle().getTextSize();
-
-        MenuParams.MenuSetting setting = params.getMenuSetting(Constant.MENU_ROW);
+    private void drawRowMenu(AbsTableEntity table, MenuParams params, @NonNull Point outPoint, int startDrawX, int startDrawY, int offsetX, int offsetY, Paint paint, Canvas canvas) {
+        int width, height, drawOffsetX, drawOffsetY = 0;
+        MenuParams.MenuSetting setting = params.getSetting(Constant.MENU_ROW);
         width = params.getWidth();
         height = params.getHeight();
-
-        //set textSize
-        paint.setTextSize(textSize);
-        if (table != null) {
+        if (table != null && table.getMenuCount(Constant.MENU_ROW) > 0) {
             //ignore offset values if menu is frozen
             //so that menu will not be moved
             if (setting.isFrozenX()) {
@@ -194,183 +190,203 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
             drawOffsetX = offsetX;
             drawOffsetY = offsetY;
 
-            Point[] points = this.calculateSkipUnseenCell(width, height, 1, table.getMenuCount(Constant.MENU_ROW), drawOffsetX, drawOffsetY);
+            Point[] points = this.calculateSkipUnseenCell(width, height, startDrawX, startDrawY, 1, table.getMenuCount(Constant.MENU_ROW), drawOffsetX, drawOffsetY);
             for (int i = points[0].y; i < points[1].y; i++) {
                 //get menu
                 AbsCellEntity menu = table.getRowMenu(i);
-                this.drawCommonCell(menu, params, i, Constant.FIXED_MENU_INDEX_ROW,
-                        width, height, drawOffsetX, drawOffsetY,
+                this.drawCommonCell(menu, params, Constant.FIXED_MENU_INDEX_ROW, i,
+                        drawOffsetX, drawOffsetY,
                         startDrawX, startDrawY, paint, canvas);
-//                if (menu != null && menu.isNeedToDraw(Constant.FIXED_MENU_INDEX_ROW, i)) {
-//                    //calculate each menu cell
-//                    left = width * i + drawOffsetX + startDrawX;
-//                    right = left + width;
-//                    top = drawOffsetY + startDrawY;
-//                    bottom = top + height;
-//                    mRecycleRect.set(left, top, right, bottom);
-//
-//                    //if the draw area cannot be seen,ignore it
-//                    if (isDrawRectCanSeen(mRecycleRect)) {
-//                        textDrawX = mRecycleRect.left;
-//                        textDrawY = mRecycleRect.centerY() + textSize * 2 / 3;
-//                        this.drawCell(menu, mCellParams.getDefaultDrawStyle(), mRecycleRect, textDrawX, textDrawY, paint, canvas);
-//                    }
-//                }
             }
 
             //draw the frozen menu item
-            if (setting.getFrozenMenuSize() > 0) {
-                int[] result = setting.getValueFrozenMenu();
+            if (setting.getFrozenItemSize() > 0) {
+                int[] result = setting.getValueFrozenItems();
                 for (int i : result) {
                     //get frozen menu
                     AbsCellEntity menu = table.getRowMenu(i);
                     drawOffsetX = 0;
-                    this.drawCommonCell(menu, params, i, Constant.FIXED_MENU_INDEX_ROW,
-                            width, height, drawOffsetX, drawOffsetY,
+                    this.drawCommonCell(menu, params, Constant.FIXED_MENU_INDEX_ROW, i,
+                            drawOffsetX, drawOffsetY,
                             startDrawX, startDrawY, paint, canvas);
                 }
             }
+            //when the frozen column draw,the drawStartY must be moved to height
+            outPoint.y = height;
         }
+        //calculate the length the menu has moved for canvas clipping
+        int result = height + drawOffsetY;
+        result = result < 0 ? 0 : result;
+        outPoint.x = result;
+        //calculate the length the cells start to draw(after menu drawing)
+        result = outPoint.x - drawOffsetY;
+        result = result > 0 ? 0 : result;
+        outPoint.y += result;
     }
 
-    private void drawColumnMenu(AbsTableEntity table, MenuParams params, int startDrawX, int startDrawY, int offsetX, int offsetY, Paint paint, Canvas canvas) {
-        int left, top, right, bottom, width, height;
-
-        float textDrawX = 0;
-        float textDrawY = 0;
-        float textSize = params.getDefaultDrawStyle().getTextSize();
-
-        MenuParams.MenuSetting setting = params.getMenuSetting(Constant.MENU_COLUMN);
+    private void drawColumnMenu(AbsTableEntity table, MenuParams params, @NonNull Point outPoint, int startDrawX, int startDrawY, int offsetX, int offsetY, Paint paint, Canvas canvas) {
+        int width, height, drawOffsetX = 0, drawOffsetY;
+        MenuParams.MenuSetting setting = params.getSetting(Constant.MENU_COLUMN);
         width = params.getWidth();
         height = params.getHeight();
-        paint.setTextSize(textSize);
-        if (table != null) {
+        if (table != null && table.getMenuCount(Constant.MENU_COLUMN) > 0) {
             //ignore offset values if menu is frozen
             //so that menu will not be moved
             if (setting.isFrozenX()) {
+                //when frozen,set the original offset to 0
+                //this property has priority
                 offsetX = 0;
             }
             if (setting.isFrozenY()) {
                 offsetY = 0;
             }
+            //copy the offset to a new var to make sure the original offset not changed.
+            drawOffsetX = offsetX;
+            drawOffsetY = offsetY;
 
-            for (int i = 0; i < table.getMenuCount(Constant.MENU_COLUMN); i++) {
+            Point[] points = this.calculateSkipUnseenCell(width, height, startDrawX, startDrawY, table.getMenuCount(Constant.MENU_COLUMN), 1, drawOffsetX, drawOffsetY);
+            for (int i = points[0].x; i < points[1].x; i++) {
                 //get menu
-                AbsCellEntity menu = table.getRowMenu(i);
-                this.drawCommonCell(menu, params, Constant.FIXED_MENU_INDEX_COLUMN, i,
-                        width, height, offsetX, offsetY,
+                AbsCellEntity menu = table.getColumnMenu(i);
+                //draw column menu
+                this.drawCommonCell(menu, params, i, Constant.FIXED_MENU_INDEX_COLUMN,
+                        drawOffsetX, drawOffsetY,
                         startDrawX, startDrawY, paint, canvas);
-//                if (menu != null && menu.isNeedToDraw(i, Constant.FIXED_MENU_INDEX_COLUMN)) {
-//                    //calculate each menu cell
-//                    left = offsetX + startDrawX;
-//                    right = left + width;
-//                    top = offsetY + startDrawY + height * i;
-//                    bottom = top + height;
-//                    mRecycleRect.set(left, top, right, bottom);
-//
-//                    //if the draw area cannot be seen,ignore it
-//                    if (isDrawRectCanSeen(mRecycleRect)) {
-//                        textDrawX = mRecycleRect.left;
-//                        textDrawY = mRecycleRect.centerY() + textSize * 2 / 3;
-//                        this.drawCell(menu, mCellParams.getDefaultDrawStyle(), mRecycleRect, textDrawX, textDrawY, paint, canvas);
-//                    }
-//                }
             }
+
+            //draw the frozen menu item
+            if (setting.getFrozenItemSize() > 0) {
+                int[] result = setting.getValueFrozenItems();
+                for (int i : result) {
+                    //get frozen menu
+                    AbsCellEntity menu = table.getRowMenu(i);
+                    drawOffsetX = 0;
+                    this.drawCommonCell(menu, params, i, Constant.FIXED_MENU_INDEX_COLUMN,
+                            drawOffsetX, drawOffsetY,
+                            startDrawX, startDrawY, paint, canvas);
+                }
+            }
+            //when the frozen column draw,the drawStartX must be moved to width
+            outPoint.y = width;
         }
+        //calculate the length the menu has moved for canvas clipping
+        int result = width + drawOffsetX;
+        result = result < 0 ? 0 : result;
+        outPoint.x = result;
+        //calculate the length the cells start to draw(after menu drawing)
+        result = outPoint.x - drawOffsetX;
+        result = result > 0 ? 0 : result;
+        outPoint.y += result;
     }
+
 
     //draw all cells on the table
     private void drawCellInTable(AbsTableEntity table, CellParams params, int clipStartX, int clipStartY, int startDrawX, int startDrawY, int canvasOffsetX, int canvasOffsetY, Paint paint, Canvas canvas) {
         if (table != null) {
-            int left, top, right, bottom, rowCount, columnCount, cellWidth, cellHeight;
-            float textDrawX, textDrawY, textSize;
-
-            textSize = params.getDefaultDrawStyle().getTextSize();
-            paint.setTextSize(textSize);
+            int rowCount, columnCount, cellWidth, cellHeight;
             rowCount = table.getRowCount();
             columnCount = table.getColumnCount();
             cellWidth = params.getWidth();
             cellHeight = params.getHeight();
+            //clip the rect to make the show area for drawing
             canvas.clipRect(clipStartX, clipStartY, mViewParams.x, mViewParams.y);
-
-            Point[] points = this.calculateSkipUnseenCell(cellWidth, cellHeight, rowCount, columnCount,
+            //skip all the unseen cells
+            Point[] points = this.calculateSkipUnseenCell(cellWidth, cellHeight, startDrawX, startDrawY, rowCount, columnCount,
                     canvasOffsetX, canvasOffsetY);
 
             for (int i = points[0].x; i < points[1].x; i++) {
                 for (int j = points[0].y; j < points[1].y; j++) {
                     AbsCellEntity cell = table.getCell(i, j);
-
-                    this.drawCommonCell(cell, params, j, i,
-                            cellWidth, cellHeight, canvasOffsetX, canvasOffsetY,
+                    //try draw cell when cell exists or need to draw
+                    this.drawCommonCell(cell, params, i, j,
+                            canvasOffsetX, canvasOffsetY,
                             startDrawX, startDrawY, paint, canvas);
-//                    //try draw cell when cell exists or need to draw
-//                    if (cell != null && cell.isNeedToDraw(i, j)) {
-//                        //recyclePoint save the real cell width and height
-//                        this.calculateCellWidthAndHeight(mRecyclePoint, cell, cellWidth, cellHeight);
-//
-//                        //we mush use cellWidth for unit here
-//                        //every cell's width maybe changed,but we draw cell one by one
-//                        //when the cell needn't to draw we just ignore it
-//                        left = startDrawX + cellWidth * j + canvasOffsetX;
-//                        right = left + mRecyclePoint.x;
-//                        top = startDrawY + cellHeight * i + canvasOffsetY;
-//                        bottom = top + mRecyclePoint.y;
-//                        mRecycleRect.set(left, top, right, bottom);
-//
-//                        //draw cell when the cell can be seen
-//                        if (isDrawRectCanSeen(mRecycleRect)) {
-//                            textDrawX = mRecycleRect.left;
-//                            textDrawY = mRecycleRect.centerY() + textSize * 2 / 3;
-//                            this.drawCell(cell, mCellParams.getDefaultDrawStyle(), mRecycleRect, textDrawX, textDrawY, paint, canvas);
-//                        }
-//                    }
+                }
+            }
+
+            //get row and column frozen setting
+            CellParams.LineSetting rowSetting = params.getSetting(Constant.LINE_ROW);
+            CellParams.LineSetting columnSetting = params.getSetting(Constant.LINE_COLUMN);
+            if (rowSetting.getFrozenItemSize() > 0) {
+                //get all frozen items' index
+                int[] result = rowSetting.getValueFrozenItems();
+                for (int i : result) {
+                    this.drawFrozenRow(table, params,
+                            startDrawX, startDrawY, canvasOffsetX, canvasOffsetY,
+                            paint, canvas);
+                }
+            }
+            //the same as frozen row
+            if (columnSetting.getFrozenItemSize() > 0) {
+                int[] result = columnSetting.getValueFrozenItems();
+                for (int i : result) {
+                    this.drawFrozenColumn(table, params,
+                            startDrawX, startDrawY, canvasOffsetX, canvasOffsetY,
+                            paint, canvas);
                 }
             }
         }
     }
 
+
     //draw frozen column
     //TODO:set textSize/textColor etc.
-    private int drawFrozenColumn(AbsTableEntity table, CellParams params, int startDrawX, int startDrawY, int offsetX, int offsetY, int whichColumn, Paint paint, Canvas canvas) {
-        int cellWidth, cellHeight, maxDrawWidth = 0;
+    private void drawFrozenColumn(AbsTableEntity table, CellParams params, int startDrawX, int startDrawY, int offsetX, int offsetY, Paint paint, Canvas canvas) {
+        int cellWidth;
+        CellParams.LineSetting setting = params.getSetting(Constant.LINE_COLUMN);
         cellWidth = params.getWidth();
-        cellHeight = params.getHeight();
-        //clip draw rect so that this would not influence menu or other drawn surfaces
-        canvas.clipRect(startDrawX, startDrawY, mViewParams.x, mViewParams.y);
-
+        //the canvas has been clipped, should not clip again
+//        canvas.clipRect(startDrawX, startDrawY, mViewParams.x, mViewParams.y);
 
         //check if the table exists
-        if (table != null && whichColumn >= 0) {
-            int left, top, right, bottom, rowCount;
-            float textDrawX, textDrawY, textSize;
-            rowCount = table.getRowCount();
-            boolean isDraw = false;
-            textSize = 60;
-            paint.setTextSize(textSize);
-            //traverse all row to get the which column
-            for (int i = 0; i < rowCount; i++) {
-                AbsCellEntity cell = table.getCell(i, whichColumn);
-                this.drawCommonCell(cell, params, whichColumn, i,
-                        cellWidth, cellHeight, 0, offsetY,
-                        startDrawX, startDrawY, paint, canvas);
-//                if (cell != null && cell.isNeedToDraw(i, whichColumn)) {
-//                    this.calculateCellWidthAndHeight(mRecyclePoint, cell, cellWidth, cellHeight);
-//                    left = startDrawX;
-//                    right = left + mRecyclePoint.x;
-//                    top = startDrawY + offsetY;
-//                    bottom = top + mRecyclePoint.y;
-//                    mRecycleRect.set(left, top, right, bottom);
-//
-//                    textDrawX = mRecycleRect.left;
-//                    textDrawY = mRecycleRect.centerY() + textSize * 2 / 3;
-//                    this.drawCell(cell, mCellParams.getDefaultDrawStyle(), mRecycleRect, textDrawX, textDrawY, paint, canvas);
-//                }
+        if (table != null) {
+            //check if table has any frozen column
+            if (setting.getFrozenItemSize() > 0) {
+                int offsetWidth = setting.getDrawLength(cellWidth);
+                int rowCount = table.getRowCount();
+                //get all the frozen columns' index
+                int[] result = setting.getValueFrozenItems();
+                for (int line : result) {
+                    //traverse all row to get the which column
+                    for (int i = 0; i < rowCount; i++) {
+                        AbsCellEntity cell = table.getCell(i, line);
+                        //draw all the columns
+                        this.drawCommonCell(cell, params, i, line,
+                                offsetWidth, offsetY,
+                                startDrawX, startDrawY, paint, canvas);
+                    }
+                }
             }
         }
-        return maxDrawWidth;
     }
 
-    private void drawFrozenRow() {
+    private void drawFrozenRow(AbsTableEntity table, CellParams params, int startDrawX, int startDrawY, int offsetX, int offsetY, Paint paint, Canvas canvas) {
+        int cellHeight;
+        CellParams.LineSetting setting = params.getSetting(Constant.LINE_ROW);
+        cellHeight = params.getHeight();
+        //the canvas has been clipped, should not clip again
+//        canvas.clipRect(startDrawX, startDrawY, mViewParams.x, mViewParams.y);
+
+        //check if the table exists
+        if (table != null) {
+            //check if table has any frozen column
+            if (setting.getFrozenItemSize() > 0) {
+                int offsetHeight = setting.getDrawLength(cellHeight);
+                int columnCount = table.getColumnCount();
+                //get all the frozen columns' index
+                int[] result = setting.getValueFrozenItems();
+                for (int line : result) {
+                    //traverse all row to get the which column
+                    for (int i = 0; i < columnCount; i++) {
+                        AbsCellEntity cell = table.getCell(line, i);
+                        //draw all the columns
+                        this.drawCommonCell(cell, params, line, i,
+                                offsetX, offsetHeight,
+                                startDrawX, startDrawY, paint, canvas);
+                    }
+                }
+            }
+        }
     }
 
     private void drawAnyWidthMask(AbsTableEntity table, MenuParams menuParams, CellParams cellParams, int maskWidth, int offsetX, int offsetY, Paint paint, Canvas canvas) {
@@ -402,8 +418,27 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
         }
     }
 
-    private void drawCommonCell(AbsCellEntity cellOrMenu, @NonNull BaseParams params, int whichColumn, int whichRow, int width, int height, int offsetX, int offsetY, int startDrawX, int startDrawY, Paint paint, Canvas canvas) {
+
+    /**
+     * draw common cells include menus
+     *
+     * @param cellOrMenu  the cell or menu for drawing
+     * @param params      cell params or menu params,both of them are extend from BaseParams
+     * @param whichRow    the row index of cell/menu
+     * @param whichColumn the column index of cell/menu
+     * @param offsetX     the length of canvas has been moved,positive is left to right,negative is right to left
+     * @param offsetY     the length of canvas has been moved,positive is top to bottom,negative is bottom to top
+     * @param startDrawX  the x coordinate of start drawing
+     * @param startDrawY  the y coordinate of start drawing
+     * @param paint
+     * @param canvas
+     * @return return the bigger one between the right of this cell and 0,it is the length from the right of this cell drawn in screen to the 0;
+     * if the cell can't be seen,0 will be return
+     */
+    private void drawCommonCell(AbsCellEntity cellOrMenu, @NonNull BaseParams params, int whichRow, int whichColumn, int offsetX, int offsetY, int startDrawX, int startDrawY, Paint paint, Canvas canvas) {
         if (cellOrMenu != null && cellOrMenu.isNeedToDraw(whichRow, whichColumn)) {
+            int width = params.getWidth();
+            int height = params.getHeight();
             this.calculateCellWidthAndHeight(mRecyclePoint, cellOrMenu, width, height);
             //calculate every cell
             //we mush use cellWidth for unit here
@@ -420,16 +455,39 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
                 int textDrawX, textDrawY;
                 textDrawX = mRecycleRect.left;
                 textDrawY = mRecycleRect.centerY() + style.getTextSize() * 2 / 3;
+                //draw cell
                 this.drawCell(cellOrMenu, style, mRecycleRect, textDrawX, textDrawY, paint, canvas);
             }
         }
     }
 
+    /**
+     * draw one menu
+     *
+     * @param menu      menu for draw
+     * @param drawStyle the drawStyle for menu,if the menu doesn't request a special drawStyle,the default drawStyle will be offered
+     * @param drawRect  the rect for menus drawing,menu should draw int this rect
+     * @param textDrawX the x axis for text drawing,default in the center x of rect.
+     * @param textDrawY the y axis for text drawing,default under the center y of rect,
+     * @param paint
+     * @param canvas
+     */
     private void drawMenu(AbsCellEntity menu, BaseDrawStyle drawStyle, Rect drawRect, float textDrawX, float textDrawY, Paint paint, Canvas canvas) {
         this.drawCell(menu, drawStyle, drawRect, textDrawX, textDrawY, paint, canvas);
     }
 
-    private void drawCell(AbsCellEntity cell, BaseDrawStyle drawStyle, Rect drawRect, float textDrawX, float textDrawY, Paint paint, Canvas canvas) {
+    /**
+     * draw one cell
+     *
+     * @param cell      cell for draw
+     * @param drawStyle the drawStyle for cell,if the cell doesn't request a special drawStyle,the default drawStyle will be offered
+     * @param drawRect  the rect for cells drawing,cell should draw in this rect
+     * @param textDrawX the x axis for text drawing,default in the center x of rect.
+     * @param textDrawY the y axis for text drawing,default under the center y of rect,
+     * @param paint
+     * @param canvas
+     */
+    private void drawCell(@NonNull AbsCellEntity cell, @NonNull BaseDrawStyle drawStyle, Rect drawRect, float textDrawX, float textDrawY, Paint paint, Canvas canvas) {
         //draw stroke
         paint.setColor(drawStyle.getStrokeColor());
         paint.setStyle(Paint.Style.STROKE);
@@ -443,12 +501,20 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
 
         //draw text
         paint.setColor(drawStyle.getTextColor());
+        paint.setTextSize(drawStyle.getTextSize());
         this.drawAutofitWidthText(drawRect.width(), cell.getText(), textDrawX, textDrawY, paint, canvas);
     }
 
 
-    //TODO: calculate cell real width and height,if the cell span other cell (left/right or top/bottom)
-    private void calculateCellWidthAndHeight(Point outPoint, AbsCellEntity cell, int defaultCellWidth, int defaultCellHeight) {
+    /**
+     * calculate cell real width and height,if the cell span other cell (left/right or top/bottom)
+     *
+     * @param outPoint          a object to save the result
+     * @param cell              the cell to calculate its width and height for drawing
+     * @param defaultCellWidth  the unit width of cell or menu
+     * @param defaultCellHeight the unit height of cell or menu
+     */
+    private void calculateCellWidthAndHeight(@NonNull Point outPoint, @NonNull AbsCellEntity cell, int defaultCellWidth, int defaultCellHeight) {
         int width = cell.getDrawWidth();
         int height = cell.getDrawHeight();
         width = width <= 0 ?
@@ -460,6 +526,12 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
         outPoint.set(width, height);
     }
 
+    /**
+     * return true if the rect in screen,false if the rect out screen
+     *
+     * @param rect the rect for drawing
+     * @return
+     */
     private boolean isDrawRectCanSeen(Rect rect) {
         if (rect != null) {
             return !(rect.right < 0 || rect.left > mViewParams.x ||
@@ -469,13 +541,26 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
         }
     }
 
+    /**
+     * calculate the position of cell seen in the screen. try to skip the unseen cells
+     *
+     * @param unitWidth    default width of cell or menu
+     * @param unitHeight   default height of cell or menu
+     * @param startDrawX
+     * @param startDrawY
+     * @param maxRow       the max row count in this line
+     * @param maxColumn    the max column count in this line
+     * @param offsetWidth  the width has moved
+     * @param offsetHeight the height has moved
+     * @return
+     */
     @NonNull
-    private Point[] calculateSkipUnseenCell(int unitWidth, int unitHeight, int maxRow, int maxColumn, int offsetWidth, int offsetHeight) {
+    private Point[] calculateSkipUnseenCell(int unitWidth, int unitHeight, int startDrawX, int startDrawY, int maxRow, int maxColumn, int offsetWidth, int offsetHeight) {
         Point beginPoint = new Point();
         Point endPoint = new Point();
 
-        beginPoint.y = Math.abs(offsetWidth) / unitWidth;
-        beginPoint.x = Math.abs(offsetHeight) / unitHeight;
+        beginPoint.y = (Math.abs(offsetWidth) - startDrawX) / unitWidth;
+        beginPoint.x = (Math.abs(offsetHeight) - startDrawY) / unitHeight;
 
         //plus 2 to make sure cells will draw in all canvas
         //if plus only 1 maybe after moving some place will show nothing.
@@ -531,8 +616,8 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
      *
      * @param maxDrawWidth max width for draw
      * @param drawText     text for draw
-     * @param drawX        the bottom axis to begin to draw text
-     * @param drawY        the axis begin to draw text
+     * @param drawX        the left axis begin to draw text
+     * @param drawY        the bottom axis begin to draw text
      * @param paint        the paint should set textSize/textColor already
      * @param canvas
      */
@@ -598,17 +683,19 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
         //only can move in the positive axis.
         //when move to a big positive axis(for example from 0 to +int),
         //the offset distance will be negative.
-//        return mIsScrollInHorizontal && newOffsetX <= 0;
         if (mViewParams == null) {
             return false;
         }
+        //TODO: check if out canvas
         float outOfCanvas = mCanvasDrawWidth + 50 - mViewParams.x;
         if (outOfCanvas > 0) {
             if (Math.abs(newOffsetPointF.x) > outOfCanvas) {
                 newOffsetPointF.x = outOfCanvas * (newOffsetPointF.x > 0 ? 1 : -1);
-            } else if (newOffsetPointF.x > 0) {
-                newOffsetPointF.x = 0;
             }
+        }
+        //here to process the situation of moving pass the original position
+        if (newOffsetPointF.x > 0) {
+            newOffsetPointF.x = 0;
         }
 //        return mIsScrollInHorizontal && newOffsetPointF.x <= 0 && outOfCanvas > 0;
         return mIsScrollInHorizontal && newOffsetPointF.x <= 0;
@@ -617,17 +704,19 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
     @Override
     public boolean isCanMovedOnY(PointF moveDistancePointF, PointF newOffsetPointF) {
         //only can move in the positive axis.
-//        return !mIsScrollInHorizontal && newOffsetY <= 0;
         if (mViewParams == null) {
             return false;
         }
+        //TODO: check if out canvas
         float outOfCanvas = mCanvasDrawHeight + 50 - mViewParams.y;
         if (outOfCanvas > 0) {
             if (Math.abs(newOffsetPointF.y) > outOfCanvas) {
                 newOffsetPointF.y = outOfCanvas * (newOffsetPointF.y > 0 ? 1 : -1);
-            } else if (newOffsetPointF.y > 0) {
-                newOffsetPointF.y = 0;
             }
+        }
+        //here to process the situation of moving pass the original position
+        if (newOffsetPointF.y > 0) {
+            newOffsetPointF.y = 0;
         }
 //        return !mIsScrollInHorizontal && newOffsetPointF.y <= 0 && outOfCanvas > 0;
         return !mIsScrollInHorizontal && newOffsetPointF.y <= 0;
@@ -639,7 +728,7 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
     }
 
     @Override
-    public void onMoveFail(int suggetEventAction) {
+    public void onMoveFail(int suggestEventAction) {
     }
 
     @Override
@@ -658,7 +747,7 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
     }
 
     @Override
-    public void onScaleFail(int suggetEventAction) {
+    public void onScaleFail(int suggestEventAction) {
 
     }
 
@@ -700,9 +789,10 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
     @Override
     public void onSingleClickByTime(MotionEvent event) {
         //TODO: set ignore width/height from drawn menu width/height
-        int x = mClickHelper.computeClickXFromFirstLine(event.getX(), mMsActionHelper.getDrawOffsetX(), mCellParams.getWidth());
-        int y = mClickHelper.computeClickYFromFirstLine(event.getY(), mMsActionHelper.getDrawOffsetY(), mCellParams.getHeight());
-        Log.i("click", "x/y=" + x + "/" + y);
+//        int x = mClickHelper.computeClickXFromFirstLine(event.getX(), mMsActionHelper.getDrawOffsetX(), mCellParams.getWidth());
+//        int y = mClickHelper.computeClickYFromFirstLine(event.getY(), mMsActionHelper.getDrawOffsetY(), mCellParams.getHeight());
+//        Log.i("click", "x/y=" + x + "/" + y);
+        Log.i("offset", "x/y=" + mMsActionHelper.getDrawOffsetX() + "/" + mMsActionHelper.getDrawOffsetY());
     }
 
     @Override
