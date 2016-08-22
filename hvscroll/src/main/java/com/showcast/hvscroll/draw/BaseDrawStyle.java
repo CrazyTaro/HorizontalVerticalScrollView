@@ -3,23 +3,19 @@ package com.showcast.hvscroll.draw;
 import android.graphics.Color;
 import android.support.annotation.ColorInt;
 
+import com.showcast.hvscroll.params.Constant;
+
 /**
  * Created by taro on 16/8/17.
  */
 public class BaseDrawStyle {
-    public static final int UNDRAW_COLOR = Color.TRANSPARENT;
-
-    public static final int DEFAULT_COLOR = Color.WHITE;
-    public static final int DEFAULT_TEXT_COLOR = Color.BLACK;
-    public static final int DEFAULT_STROKE_WIDTH = 2;
-    public static final int DEFAULT_TEXT_SIZE = 50;
-
-    protected int mStrokeColor = DEFAULT_COLOR;
-    protected int mStrokeWidth = DEFAULT_STROKE_WIDTH;
-    protected int mTextColor = DEFAULT_TEXT_COLOR;
-    protected int mTextSize = DEFAULT_TEXT_SIZE;
-    protected int mBackgroundColor = DEFAULT_COLOR;
-    protected int mSelectBgColor = DEFAULT_COLOR;
+    protected int mStrokeColor = Constant.DEFAULT_COLOR;
+    protected int mStrokeWidth = Constant.DEFAULT_STROKE_WIDTH;
+    protected int mTextColor = Constant.DEFAULT_TEXT_COLOR;
+    protected int mTextSize = Constant.DEFAULT_TEXT_SIZE;
+    protected int mBackgroundColor = Constant.DEFAULT_COLOR;
+    protected int mSelectBgColor = Constant.DEFAULT_COLOR;
+    protected boolean mIsDraw = true;
 
     public BaseDrawStyle() {
     }
@@ -89,5 +85,13 @@ public class BaseDrawStyle {
         }
         mTextSize = textSize;
         return true;
+    }
+
+    public void setIsDraw(boolean isDraw) {
+        mIsDraw = isDraw;
+    }
+
+    public boolean isDraw() {
+        return mIsDraw;
     }
 }
