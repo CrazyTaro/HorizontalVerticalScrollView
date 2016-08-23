@@ -6,8 +6,9 @@ import android.graphics.Color;
 import android.util.AttributeSet;
 import android.view.View;
 
+import com.showcast.hvscroll.draw.BaseDrawStyle;
 import com.showcast.hvscroll.draw.HorizontalVerticalScrollDraw;
-import com.showcast.hvscroll.entity.AbsTableEntity;
+import com.showcast.hvscroll.entity.TableEntity;
 import com.showcast.hvscroll.params.CellParams;
 import com.showcast.hvscroll.params.Constant;
 import com.showcast.hvscroll.params.GlobalParams;
@@ -46,6 +47,9 @@ public class HorizontalVerticalScrollView extends View {
         CellParams cellParams = new CellParams();
         cellParams.getDefaultDrawStyle().setStrokeColor(Color.TRANSPARENT);
         cellParams.getSetting(Constant.LINE_COLUMN).addFrozenItemIndex(0);
+        BaseDrawStyle style = new BaseDrawStyle();
+        style.setBackgroundColor(Color.LTGRAY);
+        cellParams.addNewDrawStyle("first", style);
 
         //global
         GlobalParams globalParams = new GlobalParams();
@@ -60,7 +64,7 @@ public class HorizontalVerticalScrollView extends View {
         globalParams.setMaskColor(Color.WHITE);
         globalParams.setMaskSplitLineColor(Color.WHITE);
         mHvDraw.setParams(globalParams, menuParams, cellParams);
-        mHvDraw.setTable(AbsTableEntity.getExampleTable());
+        mHvDraw.setTable(TableEntity.getExampleTable());
     }
 
 
