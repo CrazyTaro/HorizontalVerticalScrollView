@@ -2,6 +2,7 @@ package com.showcast.hvscroll.ui;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -34,16 +35,31 @@ public class HorizontalVerticalScrollView extends View {
     }
 
     private void initial() {
+        //menu
         MenuParams menuParams = new MenuParams();
         menuParams.setIsDrawRowMenu(true);
-        menuParams.setIsDrawColumn(true);
-        menuParams.addFrozenMenuIndex(0, Constant.MENU_ROW);
-//        menuParams.getSetting(Constant.MENU_ROW).setMenuFrozen(false, true);
-//        menuParams.getSetting(Constant.MENU_COLUMN).setMenuFrozen(true, false);
+        menuParams.setIsDrawColumn(false);
+        menuParams.getSetting(Constant.MENU_ROW).setMenuFrozen(false, true);
+        menuParams.getSetting(Constant.MENU_ROW).addFrozenItemIndex(0);
+
+        //cell
         CellParams cellParams = new CellParams();
+        cellParams.getDefaultDrawStyle().setStrokeColor(Color.TRANSPARENT);
         cellParams.getSetting(Constant.LINE_COLUMN).addFrozenItemIndex(0);
-        cellParams.getSetting(Constant.LINE_ROW).addFrozenItemIndex(0);
-        mHvDraw.setParams(new GlobalParams(), menuParams, cellParams);
+
+        //global
+        GlobalParams globalParams = new GlobalParams();
+        globalParams.setStrokeColor(Color.WHITE);
+        globalParams.setStrokeWidth(4);
+        globalParams.setIsDrawCellStroke(true);
+        globalParams.setCanvasBackgroundColor(Color.LTGRAY);
+        globalParams.setIsDrawMask(true);
+        globalParams.setMaskWidthPercent(1, 0.8f);
+        globalParams.setMaskAlpha(100);
+        globalParams.setMaskStartLine(3);
+        globalParams.setMaskColor(Color.WHITE);
+        globalParams.setMaskSplitLineColor(Color.WHITE);
+        mHvDraw.setParams(globalParams, menuParams, cellParams);
         mHvDraw.setTable(AbsTableEntity.getExampleTable());
     }
 
