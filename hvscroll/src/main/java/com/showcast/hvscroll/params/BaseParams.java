@@ -2,9 +2,11 @@ package com.showcast.hvscroll.params;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.util.ArrayMap;
 
 import com.showcast.hvscroll.draw.BaseDrawStyle;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedSet;
@@ -30,6 +32,9 @@ public abstract class BaseParams {
     }
 
     public BaseParams(int width, int height) {
+        mDefaultDrawStyle = new BaseDrawStyle();
+        mStyleMap = new ArrayMap<>(10);
+
         this.setWidth(width);
         this.setHeight(height);
         this.initialConstructor();
@@ -94,15 +99,15 @@ public abstract class BaseParams {
         return mStyleMap.put(tag, drawStyle);
     }
 
-    public BaseDrawStyle removeDrawStyle(String tag) {
+    public BaseDrawStyle removeDrawStyle(@NonNull String tag) {
         return mStyleMap.remove(tag);
     }
 
-    public boolean isContains(String tag) {
+    public boolean isContains(@NonNull String tag) {
         return mStyleMap.containsKey(tag);
     }
 
-    public BaseDrawStyle getDrawStyle(String tag) {
+    public BaseDrawStyle getDrawStyle(@NonNull String tag) {
         return mStyleMap.get(tag);
     }
 
@@ -120,6 +125,7 @@ public abstract class BaseParams {
         mDefaultDrawStyle = style;
     }
 
+    @NonNull
     public BaseDrawStyle getDefaultDrawStyle() {
         return mDefaultDrawStyle;
     }

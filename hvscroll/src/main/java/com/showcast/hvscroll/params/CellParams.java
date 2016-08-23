@@ -3,11 +3,6 @@ package com.showcast.hvscroll.params;
 import android.support.annotation.NonNull;
 
 import com.showcast.hvscroll.draw.BaseDrawStyle;
-import com.showcast.hvscroll.draw.CellDrawStyle;
-
-import java.util.Iterator;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 /**
  * cell params.you can set default cell width and height,frozen columns or rows ect.<br/>
@@ -28,35 +23,7 @@ public class CellParams extends BaseParams {
     @Override
     protected void initialConstructor() {
         super.initialConstructor();
-        this.setDefaultDrawStyle(new CellDrawStyle());
         mLineSettings = new LineSetting[2];
-    }
-
-    @Override
-    public BaseDrawStyle addNewDrawStyle(String tag, @NonNull BaseDrawStyle drawStyle) {
-        if (!(drawStyle instanceof CellDrawStyle)) {
-            throw new IllegalArgumentException("the class of drawStyle param must be CellDrawStyle");
-        }
-        return super.addNewDrawStyle(tag, drawStyle);
-
-    }
-
-    @Override
-    public CellDrawStyle getDrawStyle(String tag) {
-        return (CellDrawStyle) super.getDrawStyle(tag);
-    }
-
-    @Override
-    public CellDrawStyle getDefaultDrawStyle() {
-        return (CellDrawStyle) super.getDefaultDrawStyle();
-    }
-
-    @Override
-    public void setDefaultDrawStyle(@NonNull BaseDrawStyle style) {
-        if (!(style instanceof CellDrawStyle)) {
-            throw new IllegalArgumentException("the class of drawStyle param must be CellDrawStyle");
-        }
-        super.setDefaultDrawStyle(style);
     }
 
     @Override

@@ -3,17 +3,14 @@ package com.showcast.hvscroll.params;
 import android.support.annotation.NonNull;
 
 import com.showcast.hvscroll.draw.BaseDrawStyle;
-import com.showcast.hvscroll.draw.MenuDrawStyle;
-
-import java.util.Iterator;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 /**
  * Created by taro on 16/8/19.
  */
 public class MenuParams extends BaseParams {
+    //是否绘制行菜单
     private boolean mIsDrawRowMenu = false;
+    //是否绘制列菜单
     private boolean mIsDrawColumnMenu = false;
     private MenuSetting[] mMenuSettings;
 
@@ -27,35 +24,8 @@ public class MenuParams extends BaseParams {
 
     @Override
     protected void initialConstructor() {
+        super.initialConstructor();
         mMenuSettings = new MenuSetting[2];
-        this.setDefaultDrawStyle(new MenuDrawStyle());
-    }
-
-    @Override
-    public BaseDrawStyle addNewDrawStyle(String tag, @NonNull BaseDrawStyle drawStyle) {
-        if (!(drawStyle instanceof MenuDrawStyle)) {
-            throw new IllegalArgumentException("the class of drawStyle param must be MenuDrawStyle");
-        }
-        return super.addNewDrawStyle(tag, drawStyle);
-
-    }
-
-    @Override
-    public MenuDrawStyle getDrawStyle(String tag) {
-        return (MenuDrawStyle) super.getDrawStyle(tag);
-    }
-
-    @Override
-    public MenuDrawStyle getDefaultDrawStyle() {
-        return (MenuDrawStyle) super.getDefaultDrawStyle();
-    }
-
-    @Override
-    public void setDefaultDrawStyle(@NonNull BaseDrawStyle style) {
-        if (!(style instanceof MenuDrawStyle)) {
-            throw new IllegalArgumentException("the class of drawStyle param must be MenuDrawStyle");
-        }
-        super.setDefaultDrawStyle(style);
     }
 
     @Override
@@ -84,6 +54,15 @@ public class MenuParams extends BaseParams {
         return mIsDrawColumnMenu;
     }
 
+    /**
+     * add the frozen menus' index.<br/>
+     * 添加固定行列的索引
+     *
+     * @param index
+     * @param whichMenu tag of row/column menu.<br/>
+     *                  行或者列的标志
+     * @return true if add successfully or false if add unsuccessfully
+     */
     public boolean addFrozenMenuIndex(int index, @Constant.MenuType int whichMenu) {
         MenuSetting setting = mMenuSettings[whichMenu];
         if (setting == null) {
@@ -93,6 +72,10 @@ public class MenuParams extends BaseParams {
         return setting.addFrozenItemIndex(index);
     }
 
+    /**
+     * menu setting.a setting for frozen menus<br/>
+     * 菜单设置,固定行列的设置对象
+     */
     public static class MenuSetting extends Setting {
         private boolean mIsMenuFrozenX = false;
         private boolean mIsMenuFrozenY = false;
@@ -106,10 +89,22 @@ public class MenuParams extends BaseParams {
             mIsMenuFrozenY = frozenInY;
         }
 
+        /**
+         * menu will be frozen on the top if return true;or can be scrolled by moving if return false;<br/>
+         * 如果返回true,菜单将会固定在顶部,否则跟随界面滑动.
+         *
+         * @return
+         */
         public boolean isFrozenX() {
             return mIsMenuFrozenX;
         }
 
+        /**
+         * menu will be frozen on left if return true;or can be scrolled by moving if return false;<Br/>
+         * 如果返回true,菜单将会固定在左部,否则跟随界面滑动.
+         *
+         * @return
+         */
         public boolean isFrozenY() {
             return mIsMenuFrozenY;
         }
