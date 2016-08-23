@@ -1,7 +1,9 @@
 package com.showcast.hvscroll.params;
 
 import android.graphics.Color;
+import android.support.annotation.FloatRange;
 import android.support.annotation.IntDef;
+import android.support.annotation.IntRange;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -10,6 +12,16 @@ import java.lang.annotation.RetentionPolicy;
  * Created by taro on 16/8/22.
  */
 public class Constant {
+    @Retention(RetentionPolicy.SOURCE)
+    @FloatRange(from = 0, to = 255)
+    public @interface Alpha {
+    }
+
+    @Retention(RetentionPolicy.SOURCE)
+    @FloatRange(from = 0, to = 1)
+    public @interface MaskPercent {
+    }
+
     @Retention(RetentionPolicy.SOURCE)
     @IntDef(value = {MENU_ROW, MENU_COLUMN})
     public @interface MenuType {
@@ -51,6 +63,16 @@ public class Constant {
      * line type of column line
      */
     public static final int LINE_COLUMN = 1;
+
+
+    /**
+     * default width for cell or menu.
+     */
+    public static final int DEFAULT_WIDTH = 200;
+    /**
+     * default height for cell or menu
+     */
+    public static final int DEFAULT_HEIGHT = 80;
 
     /**
      * default span count,value = {@value DEFAULT_SPAN_COUNT}(the own cell)
