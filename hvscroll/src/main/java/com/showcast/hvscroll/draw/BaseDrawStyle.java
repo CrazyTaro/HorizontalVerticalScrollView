@@ -1,6 +1,5 @@
 package com.showcast.hvscroll.draw;
 
-import android.graphics.Color;
 import android.support.annotation.ColorInt;
 
 import com.showcast.hvscroll.params.Constant;
@@ -13,7 +12,7 @@ public class BaseDrawStyle {
     protected int mStrokeWidth = Constant.DEFAULT_STROKE_WIDTH;
     protected int mTextColor = Constant.DEFAULT_TEXT_COLOR;
     protected int mTextSize = Constant.DEFAULT_TEXT_SIZE;
-    protected int mBackgroundColor = Constant.DEFAULT_COLOR;
+    protected int mBackgroundColor = Constant.COLOR_TRANSPARENT;
     protected int mSelectBgColor = Constant.DEFAULT_COLOR;
     protected boolean mIsDraw = true;
 
