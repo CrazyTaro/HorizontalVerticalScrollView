@@ -1,7 +1,6 @@
 package com.showcast.hvscroll.draw;
 
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.PointF;
@@ -39,23 +38,20 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
     private CellParams mCellParams;
     private MenuParams mMenuParams;
 
-    private int mStartDrawX = 0;
-    private int mStartDrawY = 0;
     //the direction for scrolling
     private boolean mIsScrollInHorizontal = true;
     //the max width of canvas draws
-    private float mCanvasDrawWidth = 0;
+    private int mCanvasDrawWidth = 0;
     //the max height of canvas draws
-    private float mCanvasDrawHeight = 0;
-    private int mMaskWidth = 0;
-
-    private boolean mIsCanvasChanged = true;
+    private int mCanvasDrawHeight = 0;
 
     private Rect mRecycleRect;
     private Point mViewParams;
     private Point mRecyclePoint;
     private Point mRowPoint;
     private Point mColumnPoint;
+    private Point mLastMenuPoint;
+    private Point mLastCellPoint;
     private Paint mPaint;
 
     public HorizontalVerticalScrollDraw(@NonNull View drawView) {
@@ -74,6 +70,8 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
         mRecyclePoint = new Point();
         mRowPoint = new Point();
         mColumnPoint = new Point();
+        mLastCellPoint = new Point();
+        mLastMenuPoint = new Point();
         mPaint = new Paint();
 
         mGlobalParams = new GlobalParams();
@@ -90,7 +88,6 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
     public void setTable(AbsTableEntity table) {
         if (mTable != table) {
             mTable = table;
-            mIsCanvasChanged = true;
             mDrawView.invalidate();
         }
     }
@@ -129,10 +126,6 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
         return mCellParams;
     }
 
-    public void setMaskWidth(int maskWidth) {
-        mMaskWidth = maskWidth;
-    }
-
     public void drawCanvas(Canvas canvas) {
         if (mTable == null || mCellParams == null) {
             return;
@@ -140,7 +133,7 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
         int offsetX = (int) mMsActionHelper.getDrawOffsetX();
         int offsetY = (int) mMsActionHelper.getDrawOffsetY();
 
-        this.beforeDraw(canvas, offsetX, offsetY);
+        this.beforeDraw(canvas);
         if (mMenuParams != null) {
             //draw row menu if necessarily
             if (mMenuParams.isDrawRowMenu()) {
@@ -151,21 +144,58 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
                 this.drawColumnMenu(mTable, mMenuParams, mColumnPoint, 0, 0, offsetX, offsetY, mPaint, canvas);
             }
         }
-        //TODO: return the menu draw width or height to set the cell draw area
-        this.drawCellInTable(mTable, mCellParams, mColumnPoint.x, mRowPoint.x, mColumnPoint.y, mRowPoint.y, offsetX, offsetY, mPaint, canvas);
-        this.drawAnyWidthMask(mTable, mMenuParams, mCellParams, mMaskWidth, offsetX, offsetY, mPaint, canvas);
+        if (mGlobalParams.isDrawCellStroke()) {
+            this.drawCellBackgroundStroke(mTable, mCellParams, mColumnPoint.x, mRowPoint.x,
+                    mColumnPoint.y, mRowPoint.y, offsetX, offsetY, mPaint, canvas);
+        }
+        //draw cells and frozen columns/rows.
+        this.drawCellInTable(mTable, mCellParams, mColumnPoint.x, mRowPoint.x,
+                mColumnPoint.y, mRowPoint.y, offsetX, offsetY, mPaint, canvas);
+        if (mGlobalParams.isDrawMask()) {
+            this.drawAnyWidthMask(mTable, mMenuParams, mCellParams, mGlobalParams, offsetX, offsetY, mPaint, canvas);
+        }
     }
 
-    private void beforeDraw(Canvas canvas, int offsetX, int offsetY) {
+    protected void beforeDraw(Canvas canvas) {
         if (mViewParams == null) {
             mViewParams = this.getViewWidthHeight(mDrawView, mViewParams);
         }
+        this.calculateCanvasWidthAndHeight(mTable, mMenuParams, mCellParams);
         mColumnPoint.set(0, 0);
         mRowPoint.set(0, 0);
         canvas.drawColor(mGlobalParams.getCanvasBgColor());
     }
 
-    private void finishDraw() {
+    protected void finishDraw() {
+    }
+
+    private void calculateCanvasWidthAndHeight(AbsTableEntity table, MenuParams menuParams, CellParams cellParams) {
+        if (table == null || cellParams == null) {
+            mCanvasDrawWidth = 0;
+            mCanvasDrawHeight = 0;
+            return;
+        }
+        int width = 0, height = 0;
+        int menuWidth = 0, menuHeight = 0;
+        if (menuParams != null) {
+            if (menuParams.isDrawRowMenu()) {
+                menuHeight = menuParams.getHeight();
+                width = menuParams.getWidth() * table.getMenuCount(Constant.MENU_ROW);
+            }
+            if (menuParams.isDrawColumnMenu()) {
+                menuWidth = menuParams.getWidth();
+                height = menuParams.getHeight() * table.getMenuCount(Constant.MENU_COLUMN);
+            }
+            mCanvasDrawWidth = width + menuWidth;
+            mCanvasDrawHeight = height + menuHeight;
+        }
+        width = table.getColumnCount() * cellParams.getWidth();
+        height = table.getRowCount() * cellParams.getHeight();
+        width += menuWidth;
+        height += menuHeight;
+        mCanvasDrawWidth = mCanvasDrawWidth < width ? width : mCanvasDrawWidth;
+        mCanvasDrawHeight = mCanvasDrawHeight < height ? height : mCanvasDrawHeight;
+//        Log.i("canvas", "width/height = " + mCanvasDrawWidth + "/" + mCanvasDrawHeight);
     }
 
 
@@ -279,6 +309,42 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
         outPoint.y += result;
     }
 
+    private void drawCellBackgroundStroke(AbsTableEntity table, CellParams params, int clipStartX, int clipStartY, int startDrawX, int startDrawY, int canvasOffsetX, int canvasOffsetY, Paint paint, Canvas canvas) {
+        if (table != null) {
+            int rowCount, columnCount, cellWidth, cellHeight, drawRowCount, drawColumnCount, lineX, lineY, drawX = 0, drawY = 0;
+            rowCount = table.getRowCount();
+            columnCount = table.getColumnCount();
+            cellWidth = params.getWidth();
+            cellHeight = params.getHeight();
+            //clip the rect to make the show area for drawing
+            canvas.clipRect(clipStartX, clipStartY, mViewParams.x, mViewParams.y);
+            //skip all the unseen cells
+            Point[] points = this.calculateSkipUnseenCell(cellWidth, cellHeight, startDrawX, startDrawY, rowCount, columnCount,
+                    canvasOffsetX, canvasOffsetY);
+
+            drawRowCount = points[1].x - points[0].x;
+            drawColumnCount = points[1].y - points[0].y;
+            paint.setColor(mGlobalParams.getStrokeColor());
+            paint.setStyle(Paint.Style.FILL);
+
+
+            lineX = cellWidth * points[0].y + canvasOffsetX + startDrawX;
+            lineY = cellHeight * points[0].x + canvasOffsetY + startDrawY;
+            drawY = lineY;
+            drawX = lineX;
+            while (drawY < mViewParams.y) {
+                canvas.drawLine(0, drawY, mViewParams.x, drawY + mGlobalParams.getStrokeWidth(), paint);
+                drawY += cellHeight;
+            }
+            while (drawX < mViewParams.x) {
+                canvas.drawLine(drawX, 0, drawX + mGlobalParams.getStrokeWidth(), mViewParams.y, paint);
+                drawX += cellWidth;
+            }
+
+            //reset the draw area
+            canvas.clipRect(0, 0, mViewParams.x, mViewParams.y);
+        }
+    }
 
     //draw all cells on the table
     private void drawCellInTable(AbsTableEntity table, CellParams params, int clipStartX, int clipStartY, int startDrawX, int startDrawY, int canvasOffsetX, int canvasOffsetY, Paint paint, Canvas canvas) {
@@ -325,6 +391,9 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
                             paint, canvas);
                 }
             }
+
+            //reset the draw area
+            canvas.clipRect(0, 0, mViewParams.x, mViewParams.y);
         }
     }
 
@@ -342,7 +411,7 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
         if (table != null) {
             //check if table has any frozen column
             if (setting.getFrozenItemSize() > 0) {
-                int offsetWidth = setting.getDrawLength(cellWidth);
+                int offsetWidth = setting.getOffsetDrawLength(cellWidth);
                 int rowCount = table.getRowCount();
                 //get all the frozen columns' index
                 int[] result = setting.getValueFrozenItems();
@@ -371,7 +440,7 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
         if (table != null) {
             //check if table has any frozen column
             if (setting.getFrozenItemSize() > 0) {
-                int offsetHeight = setting.getDrawLength(cellHeight);
+                int offsetHeight = setting.getOffsetDrawLength(cellHeight);
                 int columnCount = table.getColumnCount();
                 //get all the frozen columns' index
                 int[] result = setting.getValueFrozenItems();
@@ -389,32 +458,38 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
         }
     }
 
-    private void drawAnyWidthMask(AbsTableEntity table, MenuParams menuParams, CellParams cellParams, int maskWidth, int offsetX, int offsetY, Paint paint, Canvas canvas) {
+    private void drawAnyWidthMask(AbsTableEntity table, MenuParams menuParams, @NonNull CellParams cellParams, @NonNull GlobalParams globalParams, int offsetX, int offsetY, Paint paint, Canvas canvas) {
+        int maskWidth = (int) mGlobalParams.getDrawMaskWidth(cellParams.getWidth());
         if (maskWidth <= 0) {
             return;
         }
 
-        int menuWidth, menuHeight, cellWidth, cellHeight;
-        int columnIndex = 2;
-        menuWidth = menuParams == null ? 0 : menuParams.getWidth();
-        menuHeight = menuParams == null ? 0 : menuParams.getHeight();
+        int menuWidth, cellWidth, startWidth;
+        menuWidth = (menuParams == null || !menuParams.isDrawColumnMenu()) ? 0 : menuParams.getWidth();
         cellWidth = cellParams.getWidth();
-        cellHeight = cellParams.getHeight();
+        startWidth = mGlobalParams.getDrawMaskStartWidth(cellWidth);
 
-        int canvasSeenHeight = menuHeight + cellHeight * table.getRowCount() + offsetY;
-        mRecycleRect.left = menuWidth + cellWidth * columnIndex + offsetX;
+//        int canvasSeenHeight = menuHeight + cellHeight * table.getRowCount() + offsetY;
+        int canvasSeenHeight = mCanvasDrawHeight + offsetY;
+        mRecycleRect.left = menuWidth + startWidth + offsetX;
         mRecycleRect.top = 0;
         mRecycleRect.right = mRecycleRect.left + maskWidth;
         mRecycleRect.bottom = mRecycleRect.top + (canvasSeenHeight > mViewParams.y ? mViewParams.y : canvasSeenHeight);
+        if (mRecycleRect.right - offsetX > mCanvasDrawWidth) {
+            mRecycleRect.right = offsetX + mCanvasDrawWidth;
+            if (mRecycleRect.left > mRecycleRect.right) {
+                mRecycleRect.left = mRecycleRect.right;
+            }
+        }
 
         if (isDrawRectCanSeen(mRecycleRect)) {
-            paint.setColor(Color.RED);
-            paint.setAlpha(100);
+            paint.setColor(mGlobalParams.getMaskColor());
+            paint.setAlpha(mGlobalParams.getMaskAlpha());
             canvas.drawRect(mRecycleRect, paint);
 
             paint.setAlpha(255);
-            paint.setColor(Color.LTGRAY);
-            canvas.drawLine(mRecycleRect.right, 0, mRecycleRect.right + 2, mViewParams.y, paint);
+            paint.setColor(mGlobalParams.getMaskSplitLineColor());
+            canvas.drawLine(mRecycleRect.right, 0, mRecycleRect.right + mGlobalParams.getMaskSplitLineWidth(), mViewParams.y, paint);
         }
     }
 
@@ -660,23 +735,23 @@ public class HorizontalVerticalScrollDraw implements TouchEventHelper.OnToucheEv
         }
     }
 
-    /**
-     * update the canvas width,save the max value
-     *
-     * @param newWidth
-     */
-    private void updateCanvasDrawWidth(float newWidth) {
-        mCanvasDrawWidth = newWidth > mCanvasDrawWidth ? newWidth : mCanvasDrawWidth;
-    }
-
-    /**
-     * update the canvas height,save the max value
-     *
-     * @param newHeight
-     */
-    private void updateCanvasDrawHeight(float newHeight) {
-        mCanvasDrawHeight = newHeight > mCanvasDrawHeight ? newHeight : mCanvasDrawHeight;
-    }
+//    /**
+//     * update the canvas width,save the max value
+//     *
+//     * @param newWidth
+//     */
+//    private void updateCanvasDrawWidth(float newWidth) {
+//        mCanvasDrawWidth = newWidth > mCanvasDrawWidth ? newWidth : mCanvasDrawWidth;
+//    }
+//
+//    /**
+//     * update the canvas height,save the max value
+//     *
+//     * @param newHeight
+//     */
+//    private void updateCanvasDrawHeight(float newHeight) {
+//        mCanvasDrawHeight = newHeight > mCanvasDrawHeight ? newHeight : mCanvasDrawHeight;
+//    }
 
     @Override
     public boolean isCanMovedOnX(PointF moveDistancePointF, PointF newOffsetPointF) {
