@@ -3,7 +3,6 @@ package com.showcast.hvscroll.params;
 import android.graphics.Color;
 import android.support.annotation.FloatRange;
 import android.support.annotation.IntDef;
-import android.support.annotation.IntRange;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -64,6 +63,11 @@ public class Constant {
      */
     public static final int LINE_COLUMN = 1;
 
+
+    /**
+     * default style tag
+     */
+    public static final String DEFAULT_STYLE_TAG = "hvv_default_style_tag";
 
     /**
      * default width for cell or menu.
