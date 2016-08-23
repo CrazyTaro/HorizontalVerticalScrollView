@@ -1,6 +1,7 @@
 package com.showcast.hvscroll.params;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import com.showcast.hvscroll.draw.BaseDrawStyle;
 
@@ -10,19 +11,22 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
+ * base params.all the sub params extend from this class.this class offers the base params for setting.<br/>
+ * 基础参数类,此类提供了基本的参数设置,包括宽高及绘制样式,数据存储等.
  * Created by taro on 16/8/19.
  */
 public abstract class BaseParams {
-    public static final int DEFAULT_WIDTH = 200;
-    public static final int DEFAULT_HEIGHT = 80;
-
     protected int mWidth;
     protected int mHeight;
+    //extended draw style,you can add the custom draw style here
+    //扩展的样式存储
     protected Map<String, BaseDrawStyle> mStyleMap;
+    //default style,always nonNull,used for every cell which does not request special draw style
+    //默认的样式,永不可为null,在没有匹配到单元格的指定样式时都会使用此样式.
     protected BaseDrawStyle mDefaultDrawStyle;
 
     public BaseParams() {
-        this(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+        this(Constant.DEFAULT_WIDTH, Constant.DEFAULT_HEIGHT);
     }
 
     public BaseParams(int width, int height) {
@@ -31,9 +35,20 @@ public abstract class BaseParams {
         this.initialConstructor();
     }
 
+    /**
+     * a method will be called after constructing class.<br/>
+     * 构造方法后一定会被调用的方法,当子类需要初始化某些数据时,可以重写此方法.
+     */
     protected void initialConstructor() {
     }
 
+    /**
+     * set width,true if successful or false if failed.<br/>
+     * 设置成功返回true,否则返回false
+     *
+     * @param width
+     * @return
+     */
     public boolean setWidth(int width) {
         if (width >= 0) {
             mWidth = width;
@@ -43,6 +58,13 @@ public abstract class BaseParams {
         }
     }
 
+    /**
+     * set height,true if successful or false if failed.<br/>
+     * 设置成功返回true,否则返回false.
+     *
+     * @param height
+     * @return
+     */
     public boolean setHeight(int height) {
         if (height >= 0) {
             mHeight = height;
@@ -60,6 +82,14 @@ public abstract class BaseParams {
         return mHeight;
     }
 
+    /**
+     * add new draw style.the style will be matched by tag,so please make sure the tag is unique.<br/>
+     * 添加新的绘制样式.样式将会通过tag进行匹配,应该确保tag是唯一的.
+     *
+     * @param tag       the unique tag for a style.
+     * @param drawStyle
+     * @return
+     */
     public BaseDrawStyle addNewDrawStyle(@NonNull String tag, @NonNull BaseDrawStyle drawStyle) {
         return mStyleMap.put(tag, drawStyle);
     }
@@ -80,6 +110,12 @@ public abstract class BaseParams {
         mStyleMap.clear();
     }
 
+    /**
+     * set default draw style,you can replace default style with your custom style,but the style can't be null.<br/>
+     * 设置默认的样式,你可以替换掉原始的默认样式.
+     *
+     * @param style
+     */
     public void setDefaultDrawStyle(@NonNull BaseDrawStyle style) {
         mDefaultDrawStyle = style;
     }
@@ -88,14 +124,36 @@ public abstract class BaseParams {
         return mDefaultDrawStyle;
     }
 
+    /**
+     * a abstract method to get setting.which kind of settings is decided by sub class.<br/>
+     * 获取某个设置,该设置的具体功能由子类决定.父类仅提供此方法的接口.
+     *
+     * @param which 筛选的参数.
+     * @return
+     */
     public abstract Setting getSetting(int which);
 
+    /**
+     * a common setting.<br/>
+     * 为子类提供通用的设置对象
+     */
     public static class Setting {
+        //a set for store frozen columns or rows.
+        //用于存储固定行或列的容器
         private TreeSet<Integer> mFrozenSet;
 
+        //not allow other class to construct this class.
         protected Setting() {
         }
 
+        /**
+         * add the index of frozen columns or rows.<br/>
+         * 添加需要固定显示的行或者列
+         *
+         * @param index
+         * @return true if add successfully or false if add unsuccessfully.<br/>
+         * 添加成功返回true,否则返回false
+         */
         public boolean addFrozenItemIndex(int index) {
             if (index < 0) {
                 return false;
@@ -108,6 +166,13 @@ public abstract class BaseParams {
             }
         }
 
+        /**
+         * check if a index of column/row need to be frozen.<br/>
+         * 检测指定index是否需要固定行或列.
+         *
+         * @param index
+         * @return
+         */
         public boolean isFrozenItem(int index) {
             return mFrozenSet != null && mFrozenSet.contains(index);
         }
@@ -128,14 +193,34 @@ public abstract class BaseParams {
             }
         }
 
+        /**
+         * get the last frozen item index.return -1 if not exist.the last index is the biggest index of frozen item.<br/>
+         * 返回最后一个固定行列的索引,若不存在返回-1,最后一个索引应该是最大的.
+         *
+         * @return
+         */
         public int getLastFrozenItemIndex() {
-            return mFrozenSet == null ? -1 : mFrozenSet.last();
+            return (mFrozenSet == null || mFrozenSet.size() <= 0) ? -1 : mFrozenSet.last();
         }
 
+        /**
+         * get the first frozen item index,return -1 if not exist.the first index is the smallest index of frozen item.<br/>
+         * 返回第一个固定行列的索引,若不存在返回-1,第一个索引应该最小的.
+         *
+         * @return
+         */
         public int getFirstFrozenItemIndex() {
-            return mFrozenSet == null ? -1 : mFrozenSet.first();
+            return (mFrozenSet == null || mFrozenSet.size() <= 0) ? -1 : mFrozenSet.first();
         }
 
+        /***
+         * return the set less than the index.<br/>
+         * 获取小于指定索引的序列.
+         *
+         * @param index
+         * @return
+         */
+        @Nullable
         public SortedSet<Integer> getSetLessThan(int index) {
             if (index < 0) {
                 return null;
@@ -144,6 +229,14 @@ public abstract class BaseParams {
             }
         }
 
+        /**
+         * return the set greater than the index.<br/>
+         * 获取大于指定索引的序列.
+         *
+         * @param index
+         * @return
+         */
+        @Nullable
         public SortedSet<Integer> getSetGreaterThan(int index) {
             if (index < 0) {
                 return null;
@@ -152,6 +245,13 @@ public abstract class BaseParams {
             }
         }
 
+        /**
+         * return the sorted index of frozen items.do not return the set to prevent caller to change the data in the set directly.
+         * maybe return a array which length is 0 if no data.<br/>
+         * 返回存储的固定行列的值,此值已经完成排序.无数据时返回长度为0的数组.
+         *
+         * @return
+         */
         @NonNull
         public int[] getValueFrozenItems() {
             if (mFrozenSet == null || mFrozenSet.size() <= 0) {
