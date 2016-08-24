@@ -89,30 +89,63 @@ public class GlobalParams {
         }
     }
 
+    /**
+     * set the mask alpha.<br/>
+     * 设置蒙板界面的透明度.
+     * @param alpha
+     */
     public void setMaskAlpha(@Constant.Alpha int alpha) {
         mMaskAlpha = alpha;
     }
 
+    /**
+     * set the mask color.<br/>
+     * 设置蒙板界面颜色
+     * @param color
+     */
     public void setMaskColor(@ColorInt int color) {
         mMaskColor = color;
     }
 
+    /**
+     * set the split mask line color.<br/>
+     * 设置蒙板界面最右边的边界线颜色
+     * @param color
+     */
     public void setMaskSplitLineColor(@ColorInt int color) {
         mMaskSplitLineColor = color;
     }
 
+    /**
+     * set the split mask line width.<br/>
+     * 设置蒙板界面最右边的边界线宽度.
+     * @param width
+     */
     public void setMaskSplitLineWidth(int width) {
         if (width >= 0) {
             mMaskSplitLineWidth = width;
         }
     }
 
+    /**
+     * set the count of lines the mask skips over.similar to the maskStartWidth,
+     * when maskStartWidth is valid(>0),this value will be ignored.<br/>
+     * 设置蒙板需要跳过的列数,当maskStartWidth有效时,此参数值无效.否则偏移的长度为 列数*列宽.(动态计算跳过的列数)
+     *
+     * @param lineCount
+     */
     public void setMaskStartLine(int lineCount) {
         if (lineCount >= 0) {
             mMaskStartLineCount = lineCount;
         }
     }
 
+    /**
+     * set the x coordinate for mask starting to draw.<br/>
+     * 设置蒙板界面开始绘制的坐标.蒙板只在cell界面进行绘制.不涉及menu
+     *
+     * @param startWidth
+     */
     public void setMaskStartWidth(int startWidth) {
         mMaskStartWidth = startWidth;
     }
