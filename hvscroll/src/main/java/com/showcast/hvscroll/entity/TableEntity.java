@@ -5,7 +5,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.util.SparseArrayCompat;
 
-import com.showcast.hvscroll.params.CellParams;
 import com.showcast.hvscroll.params.Constant;
 
 /**
@@ -25,33 +24,35 @@ public class TableEntity {
     public static final TableEntity getExampleTable() {
         TableEntity table = new TableEntity(35, 11);
 
-        for (int i = 0; i < 11; i++) {
-            table.addMenu(table.newRowMenu(i, "title-" + i), Constant.MENU_ROW);
-        }
+        table.addCellAutoSpan(new CellEntity(0, 0, "text"), new Point(8, 5), new Point(11, 7));
 
-        for (int i = 0; i < 11; i++) {
-            table.addMenu(table.newColumnMenu(i, "title-1" + i), Constant.MENU_COLUMN);
-//            if ((i & 1) == 1) {
-//            table.addCellAutoSpan(new CellEntity(i, 0, "cell"));
-//            if ((i & 1) == 1) {
-//                for (int k = 1; k < 6; k++) {
-//                    CellEntity newCell = new CellEntity(i, k * 2 - 1, "long cell");
-//                    //table.addCellAutoSpan(newCell, 2, false);
-//                    newCell.setSpanColumnCount(2);
-//                    newCell.setSpanRowCount(2);
-//                    table.addCellAutoSpan(newCell);
-//                }
+//        for (int i = 0; i < 11; i++) {
+//            table.addMenu(table.newRowMenu(i, "title-" + i), Constant.MENU_ROW);
+//        }
+//
+//        for (int i = 0; i < 11; i++) {
+//            table.addMenu(table.newColumnMenu(i, "title-1" + i), Constant.MENU_COLUMN);
+////            if ((i & 1) == 1) {
+////            table.addCellAutoSpan(new CellEntity(i, 0, "cell"));
+////            if ((i & 1) == 1) {
+////                for (int k = 1; k < 6; k++) {
+////                    CellEntity newCell = new CellEntity(i, k * 2 - 1, "long cell");
+////                    //table.addCellAutoSpan(newCell, 2, false);
+////                    newCell.setSpanColumnCount(2);
+////                    newCell.setSpanRowCount(2);
+////                    table.addCellAutoSpan(newCell);
+////                }
+////            }
+////            } else {
+//            CellEntity cell = new CellEntity(i, 0, "first-0");
+//            cell.setDrawStyleTag("first");
+//            table.addCellAutoSpan(cell);
+//            for (int j = 1; j < 11; j++) {
+//                CellEntity newCell = new CellEntity(i, j, i + "-" + j);
+//                table.addCellWithoutSpan(newCell);
 //            }
-//            } else {
-            CellEntity cell = new CellEntity(i, 0, "first-0");
-            cell.setDrawStyleTag("first");
-            table.addCellAutoSpan(cell);
-            for (int j = 1; j < 11; j++) {
-                CellEntity newCell = new CellEntity(i, j, i + "-" + j);
-                table.addCellWithoutSpan(newCell);
-            }
-//            }
-        }
+////            }
+//        }
 
 
 //        Log.i("count", "row/count = " + table.getRowCount() + "/" + table.getColumnCount());
@@ -198,6 +199,8 @@ public class TableEntity {
         columnCount = endP.y - startP.y;
         //update cell span count
         this.updateCellSpanCount(cell, rowCount, columnCount);
+        //update the cell index
+        cell.setRowAndColumnIndex(startP.x, startP.y);
         for (int i = 0; i <= rowCount; i++) {
             for (int j = 0; j <= columnCount; j++) {
                 this.putCell(startP.x + i, startP.y + j, cell);
@@ -315,7 +318,7 @@ public class TableEntity {
      * @return
      */
     public CellEntity removeCell(int rowIndex, int columnIndex) {
-        CellEntity oldCell = this.getRow(rowIndex).get(columnIndex);
+        CellEntity oldCell = this.getCell(rowIndex, columnIndex);
         if (oldCell != null) {
             this.removeCell(rowIndex, columnIndex, oldCell);
         }
@@ -489,6 +492,9 @@ public class TableEntity {
         //从后往前遍历
         for (int i = mRowCount - 1; i >= 0; i--) {
             row = this.getRow(i);
+            if (row == null) {
+                continue;
+            }
             if (newRowCount != mRowCount - 1) {
                 if (row.size() > 0) {
                     newRowCount = i > newRowCount ? i : newRowCount;
@@ -543,8 +549,20 @@ public class TableEntity {
      * @param rowIndex
      * @return
      */
-    @NonNull
+    @Nullable
     private SparseArrayCompat<CellEntity> getRow(int rowIndex) {
+        return mCellMap.get(rowIndex);
+    }
+
+    /**
+     * return the row in the rowIndex.the row will be created if the row is not exist.<br/>
+     * 返回指定位置的行,若该位置的行不存在,则创建一个新的行.
+     *
+     * @param rowIndex
+     * @return
+     */
+    @NonNull
+    private SparseArrayCompat<CellEntity> getRowAndCreateIfNotExist(int rowIndex) {
         SparseArrayCompat<CellEntity> row = mCellMap.get(rowIndex);
         if (row == null) {
             row = new SparseArrayCompat<>(mEstimatedColumnCount);
@@ -565,29 +583,35 @@ public class TableEntity {
     private void removeCell(int rowIndex, int columnIndex, @NonNull CellEntity cell) {
         int spanRow = cell.getSpanRowCount();
         int spanColumn = cell.getSpanColumnCount();
+        SparseArrayCompat<CellEntity> row = this.getRow(rowIndex);
         //if the cell span with no one cell,just remove it only
         if (spanRow == Constant.DEFAULT_SPAN_COUNT && spanColumn == Constant.DEFAULT_SPAN_COUNT) {
-            this.getRow(rowIndex).remove(columnIndex);
+            if (row != null) {
+                row.remove(columnIndex);
+            }
         } else if (spanRow == Constant.DEFAULT_SPAN_COUNT) {
             //if the cell span with column only
-            SparseArrayCompat<CellEntity> row = this.getRow(rowIndex);
-            for (int i = 0; i < spanColumn; i++) {
-                row.remove(i + columnIndex);
+            if (row != null) {
+                for (int i = 0; i < spanColumn; i++) {
+                    row.remove(i + columnIndex);
+                }
             }
         } else if (spanColumn == Constant.DEFAULT_SPAN_COUNT) {
             //if the cell span with row only
-            SparseArrayCompat<CellEntity> row = null;
             for (int i = 0; i < spanRow; i++) {
                 row = this.getRow(i + rowIndex);
-                row.remove(columnIndex);
+                if (row != null) {
+                    row.remove(columnIndex);
+                }
             }
         } else {
             //if the cell span with row and column,remove all
-            SparseArrayCompat<CellEntity> row = null;
             for (int i = 0; i < spanRow; i++) {
                 row = this.getRow(i + rowIndex);
-                for (int j = 0; j < spanColumn; j++) {
-                    row.remove(j + columnIndex);
+                if (row != null) {
+                    for (int j = 0; j < spanColumn; j++) {
+                        row.remove(j + columnIndex);
+                    }
                 }
             }
         }
@@ -604,14 +628,24 @@ public class TableEntity {
      *                    新单元格的列索引.
      * @param cell        the cell to put into table.it can be null.<br/>
      *                    新添加的cell,可以是null
-     * @return
+     * @return return the old cell.maybe null;<br/>
+     * 返回旧的单元格对象,可能是null
      */
+
     private CellEntity putCell(int rowIndex, int columnIndex, @Nullable CellEntity cell) {
-        CellEntity oldCell = this.getRow(rowIndex).get(columnIndex);
-        if (cell != null) {
-            cell.setRowAndColumnIndex(rowIndex, columnIndex);
+        SparseArrayCompat<CellEntity> row = this.getRow(rowIndex);
+        CellEntity oldCell = null;
+        if (cell != null && row == null) {
+            row = this.getRowAndCreateIfNotExist(rowIndex);
+            row.put(columnIndex, cell);
+        } else if (cell != null) {
+            oldCell = row.get(columnIndex);
+            row.put(columnIndex, cell);
+        } else if (row != null) {
+            oldCell = row.get(columnIndex);
         }
-        this.getRow(rowIndex).put(columnIndex, cell);
+        //other situations: row null so the old cell is null too;
+        //or cell is null so we needn't put the cell into table.
         return oldCell;
     }
 
