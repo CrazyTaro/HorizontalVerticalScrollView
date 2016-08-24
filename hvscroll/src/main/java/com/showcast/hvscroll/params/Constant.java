@@ -63,6 +63,28 @@ public class Constant {
      */
     public static final int LINE_COLUMN = 1;
 
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef(value = {MOVE_DIRECTION_HORIZONTAL, MOVE_DIRECTION_VERTICAL, MOVE_DIRECTION_BOTH, MOVE_DIRECTOIN_NONE})
+    public @interface MoveDirection {
+    }
+
+    /**
+     * horizontal direction
+     */
+    public static final int MOVE_DIRECTION_HORIZONTAL = -1;
+    /**
+     * vertical direction
+     */
+    public static final int MOVE_DIRECTION_VERTICAL = 1;
+    /**
+     * both direction
+     */
+    public static final int MOVE_DIRECTION_BOTH = Integer.MAX_VALUE;
+    /**
+     * both directions are not allowed to move.
+     */
+    public static final int MOVE_DIRECTOIN_NONE = Integer.MIN_VALUE;
+
 
     /**
      * default style tag

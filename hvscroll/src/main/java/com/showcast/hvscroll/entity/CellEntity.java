@@ -61,7 +61,7 @@ public class CellEntity {
     }
 
     /**
-     * set the index of row and column.do not use this method at will.
+     * set the index of row and column.do not use this method casually.
      * the index decide whether this cell will be drawn or not.{@link #isNeedToDraw(int, int)}<br/>
      * 设置单元格的行列索引,不要随便使用此方法,设置的索引决定了此单元格是否会被绘制.详见链接方法.
      *

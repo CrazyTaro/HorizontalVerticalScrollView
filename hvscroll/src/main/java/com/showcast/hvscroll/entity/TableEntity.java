@@ -13,8 +13,8 @@ import com.showcast.hvscroll.params.Constant;
 public class TableEntity {
     protected int mRowCount = 0;
     protected int mColumnCount = 0;
-    protected int mRowMenuCount = 0;
-    protected int mColumnMenuCount = 0;
+    protected int mMenuCountInRow = 0;
+    protected int mMenuCountInColumn = 0;
     protected int mEstimatedRowCount = 20;
     protected int mEstimatedColumnCount = 20;
     protected SparseArrayCompat<CellEntity> mColumnMenuList;
@@ -114,11 +114,11 @@ public class TableEntity {
         switch (whichMenu) {
             case Constant.MENU_ROW:
                 mRowMenuList.put(menu.getColumnIndex(), menu);
-                this.updateMenuCount(0, menu.getColumnIndex() + 1);
+                this.updateMenuCount(menu.getColumnIndex() + 1, 0);
                 break;
             case Constant.MENU_COLUMN:
                 mColumnMenuList.put(menu.getRowIndex(), menu);
-                this.updateMenuCount(menu.getRowIndex() + 1, 0);
+                this.updateMenuCount(0, menu.getRowIndex() + 1);
                 break;
         }
     }
@@ -272,17 +272,15 @@ public class TableEntity {
     public void addCellAutoSpan(@NonNull CellEntity cell) {
         int spanRow = cell.getSpanRowCount();
         int spanColumn = cell.getSpanColumnCount();
-        int rowIndex = cell.getRowIndex();
-        int columnIndex = cell.getColumnIndex();
         //if the cell not span with any other cells,just put it only
         if (spanRow == Constant.DEFAULT_SPAN_COUNT && spanColumn == Constant.DEFAULT_SPAN_COUNT) {
             this.addCellWithoutSpan(cell);
         } else if (spanRow == Constant.DEFAULT_SPAN_COUNT) {
             //if the cell span with row
-            this.addCellAutoSpan(cell, columnIndex, columnIndex + spanColumn, false);
+            this.addCellAutoSpan(cell, spanColumn, false);
         } else if (spanColumn == Constant.DEFAULT_SPAN_COUNT) {
             //if the cell span with column
-            this.addCellAutoSpan(cell, rowIndex, rowIndex + spanRow, true);
+            this.addCellAutoSpan(cell, spanRow, true);
         } else {
             //if the cell span with row and column
             Point from, to;
@@ -383,9 +381,9 @@ public class TableEntity {
     public int getMenuCount(@Constant.MenuType int whichMenu) {
         switch (whichMenu) {
             case Constant.MENU_ROW:
-                return mRowMenuList == null ? 0 : mRowMenuCount;
+                return mRowMenuList == null ? 0 : mMenuCountInRow;
             case Constant.MENU_COLUMN:
-                return mColumnMenuList == null ? 0 : mColumnMenuCount;
+                return mColumnMenuList == null ? 0 : mMenuCountInColumn;
             default:
                 return 0;
         }
@@ -468,9 +466,9 @@ public class TableEntity {
                 newColumnCount = i;
             }
         }
-        isChanged = newRowCount != mRowMenuCount || newColumnCount != mColumnMenuCount;
-        mRowMenuCount = newRowCount + 1;
-        mColumnMenuCount = newColumnCount + 1;
+        isChanged = newRowCount != mMenuCountInRow || newColumnCount != mMenuCountInColumn;
+        mMenuCountInRow = newRowCount + 1;
+        mMenuCountInColumn = newColumnCount + 1;
         return isChanged;
     }
 
@@ -669,8 +667,8 @@ public class TableEntity {
      * @param columnMenuCount
      */
     private void updateMenuCount(int rowMenuCount, int columnMenuCount) {
-        mRowMenuCount = mRowMenuCount < rowMenuCount ? rowMenuCount : mRowMenuCount;
-        mColumnMenuCount = mColumnMenuCount < columnMenuCount ? columnMenuCount : mColumnMenuCount;
+        mMenuCountInRow = mMenuCountInRow < rowMenuCount ? rowMenuCount : mMenuCountInRow;
+        mMenuCountInColumn = mMenuCountInColumn < columnMenuCount ? columnMenuCount : mMenuCountInColumn;
     }
 
     /**
