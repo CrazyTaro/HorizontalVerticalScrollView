@@ -2,6 +2,7 @@ package com.showcast.hvscroll.draw;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.support.annotation.NonNull;
 import android.view.View;
@@ -9,6 +10,7 @@ import android.view.View;
 import com.showcast.hvscroll.entity.CellEntity;
 import com.showcast.hvscroll.params.CellParams;
 import com.showcast.hvscroll.params.Constant;
+import com.showcast.hvscroll.params.GlobalParams;
 
 /**
  * Created by taro on 16/8/23.
@@ -36,6 +38,18 @@ public class SimpleHVScrollTableDraw extends AbsHorizontalVerticalScrollTableDra
         paint.setStyle(Paint.Style.FILL);
         paint.setTextSize(drawStyle.getTextSize());
         this.drawAutofitWidthText(drawRect.width(), cell.getText(), textDrawX, textDrawY, paint, canvas);
+    }
+
+    @Override
+    protected void drawMask(@NonNull GlobalParams params, @NonNull Rect rect, @NonNull Point viewParams, Paint paint, Canvas canvas) {
+        paint.setColor(params.getMaskColor());
+        paint.setAlpha(params.getMaskAlpha());
+        canvas.drawRect(rect, paint);
+
+        paint.setAlpha(255);
+        paint.setColor(params.getMaskSplitLineColor());
+        canvas.drawLine(rect.right, 0, rect.right + params.getMaskSplitLineWidth(), viewParams.y, paint);
+
     }
 
     @Override

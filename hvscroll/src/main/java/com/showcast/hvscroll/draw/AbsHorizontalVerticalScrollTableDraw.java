@@ -26,8 +26,7 @@ import com.showcast.hvscroll.touchhelper.TouchEventHelper;
  * Created by taro on 16/8/17.
  */
 public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollTable, TouchEventHelper.OnToucheEventListener,
-        MoveAndScaleTouchHelper.IMoveEvent, MoveAndScaleTouchHelper.IScaleEvent,
-        MoveAndScaleTouchHelper.INotificationEvent {
+        MoveAndScaleTouchHelper.IMoveEvent, MoveAndScaleTouchHelper.INotificationEvent {
     private TouchEventHelper mTouchHelper;
     private MoveAndScaleTouchHelper mMsActionHelper;
     private ClickPointComputeHelper mClickHelper;
@@ -46,9 +45,9 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
     //the max height of canvas draws
     private int mCanvasDrawHeight = 0;
 
-    private Rect mRecycleRect;
-    private Point mViewParams;
-    private Point mRecyclePoint;
+    protected Rect mRecycleRect;
+    protected Point mViewParams;
+    protected Point mRecyclePoint;
     private Point mRowPoint;
     private Point mColumnPoint;
     private Paint mPaint;
@@ -60,7 +59,7 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
 
     private AbsHorizontalVerticalScrollTableDraw() {
         mTouchHelper = new TouchEventHelper(this);
-        mMsActionHelper = new MoveAndScaleTouchHelper(this, this);
+        mMsActionHelper = new MoveAndScaleTouchHelper(null, this);
         mClickHelper = new ClickPointComputeHelper();
 
         mMsActionHelper.setNoticationEvent(this);
@@ -135,6 +134,11 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
         return mCellParams;
     }
 
+    /**
+     * draw canvas.
+     *
+     * @param canvas
+     */
     public void drawCanvas(Canvas canvas) {
         if (mTable == null || mCellParams == null) {
             return;
@@ -171,19 +175,38 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
     }
 
 
+    /**
+     * do something before drawing
+     *
+     * @param canvas
+     */
     protected void beforeDraw(Canvas canvas) {
         if (mViewParams == null) {
             mViewParams = this.getViewWidthHeight(mDrawView, mViewParams);
         }
+        //update the canvas width and height.
         this.calculateCanvasWidthAndHeight(mTable, mMenuParams, mCellParams);
+        //reset clip/startDraw position points.
         mColumnPoint.set(0, 0);
         mRowPoint.set(0, 0);
+        //draw background.
         canvas.drawColor(mGlobalParams.getCanvasBgColor());
     }
 
+    /**
+     * do something after drawing.
+     */
     protected void finishDraw() {
     }
 
+    /**
+     * calculate the canvas' width and height.depends on the width and height of menu and cell is fixed.<br/>
+     * 计算界面的宽高.这个在菜单与单元格之间的宽高不变时有效(若可以动态改变则无效)
+     *
+     * @param table
+     * @param menuParams
+     * @param cellParams
+     */
     private void calculateCanvasWidthAndHeight(TableEntity table, MenuParams menuParams, CellParams cellParams) {
         if (table == null || cellParams == null) {
             mCanvasDrawWidth = 0;
@@ -192,6 +215,7 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
         }
         int width = 0, height = 0;
         int menuWidth = 0, menuHeight = 0;
+        //calculate menu draw width and height.
         if (menuParams != null) {
             if (menuParams.isDrawRowMenu()) {
                 menuHeight = menuParams.getHeight();
@@ -204,13 +228,13 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
             mCanvasDrawWidth = width + menuWidth;
             mCanvasDrawHeight = height + menuHeight;
         }
+        //calculate table cells.
         width = table.getColumnCount() * cellParams.getWidth();
         height = table.getRowCount() * cellParams.getHeight();
         width += menuWidth;
         height += menuHeight;
         mCanvasDrawWidth = mCanvasDrawWidth < width ? width : mCanvasDrawWidth;
         mCanvasDrawHeight = mCanvasDrawHeight < height ? height : mCanvasDrawHeight;
-//        Log.i("canvas", "width/height = " + mCanvasDrawWidth + "/" + mCanvasDrawHeight);
     }
 
 
@@ -261,13 +285,7 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
             outPoint.x = height;
         }
         //calculate the length the menu has moved for canvas clipping
-//        int result = height + drawOffsetY;
-//        result = result < 0 ? 0 : result;
-//        outPoint.x = result;
-//        //calculate the length the cells start to draw(after menu drawing)
-//        result = outPoint.x - drawOffsetY;
-//        result = result > 0 ? 0 : result;
-//        outPoint.y += result;
+        //calculate the length the cells start to draw(after menu drawing)
         outPoint.x += drawOffsetY;
         outPoint.x = outPoint.x < 0 ? 0 : outPoint.x;
         outPoint.y -= drawOffsetY;
@@ -321,19 +339,28 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
             outPoint.x = width;
         }
         //calculate the length the menu has moved for canvas clipping
-//        int result = width + drawOffsetX;
-//        result = result < 0 ? 0 : result;
-//        outPoint.x = result;
         outPoint.x += drawOffsetX;
         outPoint.x = outPoint.x < 0 ? 0 : outPoint.x;
         //calculate the length the cells start to draw(after menu drawing)
         outPoint.y -= drawOffsetX;
         outPoint.y = outPoint.y > 0 ? 0 : outPoint.y;
-//        result = outPoint.x - drawOffsetX;
-//        result = result > 0 ? 0 : result;
-//        outPoint.y += result;
     }
 
+    /**
+     * draw the cell stroke on the background.when the cell set to draw its stroke,this will be covered.<br/>
+     * 在背景色上绘制界面单元格的划分线.单元格中所有的绘制操作将会覆盖对应区域的界面(不会影响到单元格的绘制)
+     *
+     * @param table
+     * @param params
+     * @param clipStartX
+     * @param clipStartY
+     * @param startDrawX
+     * @param startDrawY
+     * @param canvasOffsetX
+     * @param canvasOffsetY
+     * @param paint
+     * @param canvas
+     */
     protected void drawCellBackgroundStroke(TableEntity table, CellParams params, int clipStartX, int clipStartY, int startDrawX, int startDrawY, int canvasOffsetX, int canvasOffsetY, Paint paint, Canvas canvas) {
         if (table != null) {
             int rowCount, columnCount, cellWidth, cellHeight, lineX, lineY, drawX, drawY;
@@ -397,6 +424,21 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
         }
     }
 
+    /**
+     * draw frozen columns or rows.<br/>
+     * 用于绘制固定的行和列.实际绘制某一行或列由对应的绘制方法完成,此方法主要是做绘制的判断及控件绘制顺序
+     *
+     * @param table
+     * @param params
+     * @param clipStartX
+     * @param clipStartY
+     * @param startDrawX
+     * @param startDrawY
+     * @param canvasOffsetX
+     * @param canvasOffsetY
+     * @param paint
+     * @param canvas
+     */
     protected void drawFrozenCell(TableEntity table, CellParams params, int clipStartX, int clipStartY, int startDrawX, int startDrawY, int canvasOffsetX, int canvasOffsetY, Paint paint, Canvas canvas) {
         if (table != null) {
             //clip the rect to make the show area for drawing
@@ -457,6 +499,7 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
         }
     }
 
+    //draw frozen row
     protected void drawFrozenRow(TableEntity table, CellParams params, int startDrawX, int startDrawY, int offsetX, int offsetY, Paint paint, Canvas canvas) {
         int cellHeight;
         CellParams.LineSetting setting = params.getSetting(Constant.LINE_ROW);
@@ -485,6 +528,23 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
         }
     }
 
+    /**
+     * draw mask with any width which given by globalParams.<br/>
+     * 绘制蒙板界面,界面的相关设置由globalParmas决定
+     *
+     * @param menuParams   offer the menu width/height if menu need to be drawn.<br/>
+     *                     提供菜单的宽高当菜单需要被绘制时.
+     * @param cellParams   offset the cell width/height.it is about the width of mask to draw.<br/>
+     *                     提供单元格的宽高.这个与最终绘制的蒙板界面宽度有关.
+     * @param globalParams offset the all params about drawing mask.<br/>
+     *                     提供所有与蒙板界面相关的参数.
+     * @param clipX
+     * @param clipY
+     * @param offsetX
+     * @param offsetY
+     * @param paint
+     * @param canvas
+     */
     protected void drawAnyWidthMask(MenuParams menuParams, @NonNull CellParams cellParams, @NonNull GlobalParams globalParams, int clipX, int clipY, int offsetX, int offsetY, Paint paint, Canvas canvas) {
         int maskWidth = (int) globalParams.getDrawMaskWidth(cellParams.getWidth());
         if (maskWidth <= 0) {
@@ -510,14 +570,7 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
 
         if (isDrawRectCanSeen(mRecycleRect)) {
             canvas.clipRect(clipX, clipY, mViewParams.x, mViewParams.y);
-            paint.setColor(globalParams.getMaskColor());
-            paint.setAlpha(globalParams.getMaskAlpha());
-            canvas.drawRect(mRecycleRect, paint);
-
-            paint.setAlpha(255);
-            paint.setColor(globalParams.getMaskSplitLineColor());
-            canvas.drawLine(mRecycleRect.right, 0, mRecycleRect.right + globalParams.getMaskSplitLineWidth(), mViewParams.y, paint);
-
+            this.drawMask(globalParams, mRecycleRect, mViewParams, paint, canvas);
             canvas.clipRect(0, 0, mViewParams.x, mViewParams.y);
         }
     }
@@ -793,26 +846,6 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
     }
 
     @Override
-    public boolean isCanScale(float newScaleRate) {
-        return false;
-    }
-
-    @Override
-    public void setScaleRate(float newScaleRate, boolean isNeedStoreValue) {
-
-    }
-
-    @Override
-    public void onScale(int suggestEventAction) {
-        mDrawView.invalidate();
-    }
-
-    @Override
-    public void onScaleFail(int suggestEventAction) {
-
-    }
-
-    @Override
     public void startMove(float mouseDownX, float mouseDownY) {
         int direction = this.getMoveDirection(mouseDownX, mouseDownY);
         if (direction == Constant.MOVE_DIRECTION_HORIZONTAL) {
@@ -875,7 +908,7 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
     }
 
     /**
-     * draw one cell
+     * draw one cell.
      *
      * @param cell      cell for draw
      * @param drawStyle the drawStyle for cell,if the cell doesn't request a special drawStyle,the default drawStyle will be offered
@@ -886,6 +919,17 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
      * @param canvas
      */
     protected abstract void drawCell(@NonNull CellEntity cell, @NonNull BaseDrawStyle drawStyle, Rect drawRect, float textDrawX, float textDrawY, Paint paint, Canvas canvas);
+
+    /**
+     * draw mask.it is a choice.you can do nothing here.
+     *
+     * @param params     offer all the params for drawing mask.
+     * @param rect       the area for drawing mask.
+     * @param viewParams the width and height of this view.
+     * @param paint
+     * @param canvas
+     */
+    protected abstract void drawMask(@NonNull GlobalParams params, @NonNull Rect rect, @NonNull Point viewParams, Paint paint, Canvas canvas);
 
     /**
      * this method will be called before moving.and the start moving position is given.
