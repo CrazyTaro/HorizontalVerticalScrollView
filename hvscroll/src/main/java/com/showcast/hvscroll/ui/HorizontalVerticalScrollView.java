@@ -45,7 +45,7 @@ public class HorizontalVerticalScrollView extends View {
 
         //cell
         CellParams cellParams = new CellParams();
-        cellParams.getDefaultDrawStyle().setStrokeColor(Color.TRANSPARENT);
+//        cellParams.getDefaultDrawStyle().setStrokeColor(Color.TRANSPARENT);
         cellParams.getSetting(Constant.LINE_COLUMN).addFrozenItemIndex(0);
         BaseDrawStyle style = new BaseDrawStyle();
         style.setBackgroundColor(Color.LTGRAY);
@@ -55,9 +55,9 @@ public class HorizontalVerticalScrollView extends View {
         GlobalParams globalParams = new GlobalParams();
         globalParams.setStrokeColor(Color.WHITE);
         globalParams.setStrokeWidth(4);
-        globalParams.setIsDrawCellStroke(true);
+        globalParams.setIsDrawCellStroke(false);
         globalParams.setCanvasBackgroundColor(Color.LTGRAY);
-        globalParams.setIsDrawMask(true);
+        globalParams.setIsDrawMask(false);
         globalParams.setMaskWidthPercent(1, 0.8f);
         globalParams.setMaskAlpha(100);
         globalParams.setMaskStartLine(3);
