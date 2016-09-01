@@ -315,14 +315,13 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
             outPoint.x = height;
         }
         //calculate the length the menu has moved for canvas clipping
-        //calculate the length the cells start to draw(after menu drawing)
         outPoint.x += drawOffsetY;
-//        outPoint.x = outPoint.x < 0 ? 0 : outPoint.x;
-//        outPoint.y -= drawOffsetY;
-//        outPoint.y = outPoint.y > 0 ? outPoint.y : drawOffsetY;
+        //calculate the length the cells start to draw(after menu drawing)
+        //changed the startDrawY if menu need to be frozen.
         outPoint.y = setting.isFrozenY() ? outPoint.y + drawOffsetY : outPoint.y;
     }
 
+    //TODO:奖行列菜单的绘制合并为一个方法,相当一部分代码相同,不过这并不是必须的.
     protected void drawColumnMenu(TableEntity table, MenuParams params, @NonNull Point outPoint, int startDrawX, int startDrawY, int offsetX, int offsetY, Paint paint, Canvas canvas) {
         int width, height, drawOffsetX = 0, drawOffsetY;
         MenuParams.MenuSetting setting = params.getSetting(Constant.MENU_COLUMN);
@@ -371,10 +370,8 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
         }
         //calculate the length the menu has moved for canvas clipping
         outPoint.x += drawOffsetX;
-//        outPoint.x = outPoint.x < 0 ? 0 : outPoint.x;
         //calculate the length the cells start to draw(after menu drawing)
-//        outPoint.y += drawOffsetX;
-//        outPoint.y = outPoint.y > 0 ? 0 : outPoint.y;
+        //changed the startDrawX when this menu need to be frozen.
         outPoint.y = setting.isFrozenX() ? outPoint.y += drawOffsetX : outPoint.y;
     }
 
@@ -525,6 +522,7 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
     }
 
 
+    //TODO:将固定行列绘制合并为一个方法进行操作(80%的代码相同)
     //draw frozen column
     protected void drawFrozenColumn(TableEntity table, CellParams params, int startDrawX, int startDrawY, int offsetX, int offsetY, Paint paint, Canvas canvas) {
         int cellWidth;
@@ -948,8 +946,8 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
 
     @Override
     public void onSingleClickByTime(MotionEvent event) {
-        //TODO: set ignore width/height from drawn menu width/height
         if (isNeedToDraw() && mCellClickListener != null) {
+            //TODO:菜单单击无效,不会进行检测与响应...
             int y = mClickHelper.computeClickYFromFirstLine(event.getX(), mMsActionHelper.getDrawOffsetX(), mMenuSize.x, mTable.getColumnCount());
             int x = mClickHelper.computeClickXFromFirstLine(event.getY(), mMsActionHelper.getDrawOffsetY(), mMenuSize.y, mTable.getRowCount());
             Log.i("tag", "result x/y=" + x + "/" + y);
