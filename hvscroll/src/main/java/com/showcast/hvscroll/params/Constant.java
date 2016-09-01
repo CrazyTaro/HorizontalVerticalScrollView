@@ -18,7 +18,7 @@ public class Constant {
 
     @Retention(RetentionPolicy.SOURCE)
     @FloatRange(from = 0, to = 1)
-    public @interface MaskPercent {
+    public @interface FloatPercent {
     }
 
     @Retention(RetentionPolicy.SOURCE)
@@ -85,6 +85,25 @@ public class Constant {
      */
     public static final int MOVE_DIRECTOIN_NONE = Integer.MIN_VALUE;
 
+
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef(value = {STYLE_USE_FIXED_SIZE, STYLE_BASE_ON_PARENT_SIZE, STYLE_BASE_ON_PARENT_WIDTH, STYLE_BASE_ON_PARENT_HEIGHT})
+    public @interface StyleSize {
+    }
+
+    public static final int STYLE_USE_FIXED_SIZE = -1;
+    /**
+     * width and height percent base on their parent's sizes.
+     */
+    public static final int STYLE_BASE_ON_PARENT_SIZE = 0;
+    /**
+     * width and height just base on parent's width
+     */
+    public static final int STYLE_BASE_ON_PARENT_WIDTH = 1;
+    /**
+     * width and height just base on parent's height
+     */
+    public static final int STYLE_BASE_ON_PARENT_HEIGHT = 2;
 
     /**
      * default style tag

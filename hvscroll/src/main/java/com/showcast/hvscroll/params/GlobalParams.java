@@ -82,7 +82,7 @@ public class GlobalParams {
      * @param percent   percent to mask on the total width of mask lines.<br/>
      *                  蒙板的百分比,基于指定列数的总宽
      */
-    public void setMaskWidthPercent(int maskLines, @Constant.MaskPercent float percent) {
+    public void setMaskWidthPercent(int maskLines, @Constant.FloatPercent float percent) {
         if (maskLines >= 0) {
             mMaskWidthLines = maskLines;
             mMaskWidthPercent = percent;
