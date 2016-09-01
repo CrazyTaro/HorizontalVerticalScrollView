@@ -46,41 +46,25 @@ public class ClickPointComputeHelper {
         return true;
     }
 
-    public int computeClickYFromFirstLine(float y, float offsetY, float ignoreY) {
-        float remainY = y - mPaddingTop - ignoreY - offsetY;
-        int cellY = 0;
-        //out of click area
-        if (remainY < 0) {
-            return -1;
-        }
-        while (remainY > 0) {
-            remainY -= mIntervalInHeight;
-            remainY -= mCellHeight;
-            cellY++;
-        }
-        if (remainY + mCellHeight > 0) {
-            return cellY - 1;
-        } else {
-            return -1;
-        }
-    }
-
-    public int computeClickXFromFirstLine(float x, float offsetX, float ignoreX) {
-        float remainX = x - mPaddingLeft - ignoreX - offsetX;
+    public int computeClickXFromFirstLine(float y, float offsetY, float ignoreY, int maxRowCount) {
+        float remainX = y - mPaddingTop - ignoreY - offsetY;
         int cellX = 0;
+        //out of click area
         if (remainX < 0) {
             return -1;
         }
-        while (remainX > 0) {
-            remainX -= mIntervalInWidth;
-            remainX -= mCellWidth;
-            cellX++;
-        }
-        if (remainX + mCellWidth > 0) {
-            return cellX - 1;
-        } else {
+        cellX = (int) (remainX / (mCellHeight + mIntervalInHeight));
+        return cellX >= maxRowCount ? -1 : cellX;
+    }
+
+    public int computeClickYFromFirstLine(float x, float offsetX, float ignoreX, int maxColumnCount) {
+        float remainY = x - mPaddingLeft - ignoreX - offsetX;
+        int cellY = 0;
+        if (remainY < 0) {
             return -1;
         }
+        cellY = (int) (remainY / (mCellWidth + mIntervalInWidth));
+        return cellY >= maxColumnCount ? -1 : cellY;
     }
 
     public int computeClickXFromMiddle(float x, float middleX, float leftStart, float rightStart) {
