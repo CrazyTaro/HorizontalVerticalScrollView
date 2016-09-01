@@ -14,7 +14,7 @@ import com.showcast.hvscroll.params.GlobalParams;
 import com.showcast.hvscroll.params.MenuParams;
 import com.showcast.hvscroll.ui.HorizontalVerticalScrollView;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements IHVScrollTable.OnCellClickListener {
     HorizontalVerticalScrollView mHVscroll = null;
     String[] menu = {"Firday,June 3", "9 pm", "9:30 pm", "10:00 pm"};
     String[][] cell = {
@@ -63,41 +63,50 @@ public class MainActivity extends AppCompatActivity {
         //menu
         MenuParams menuParams = new MenuParams();
         menuParams.setHeight(100);
-        menuParams.setWidth(400);
+        menuParams.setWidth(300);
         menuParams.getDefaultDrawStyle().setBackgroundColor(Color.WHITE);
         menuParams.setIsDrawRowMenu(true);
-        menuParams.setIsDrawColumn(false);
-        menuParams.getSetting(Constant.MENU_ROW).setMenuFrozen(false, true);
+        menuParams.setIsDrawColumn(true);
+        menuParams.getSetting(Constant.MENU_ROW).setMenuFrozen(false, false);
         menuParams.getSetting(Constant.MENU_ROW).addFrozenItemIndex(0);
+        menuParams.getSetting(Constant.MENU_COLUMN).setMenuFrozen(false, false);
 
         //cell
         CellParams cellParams = new CellParams();
-        cellParams.setHeight(100);
-        cellParams.setWidth(400);
+        cellParams.setHeight(200);
+        cellParams.setWidth(300);
         cellParams.getDefaultDrawStyle().setBackgroundColor(Color.BLACK);
         cellParams.getDefaultDrawStyle().setStrokeWidth(5);
         cellParams.getDefaultDrawStyle().setTextColor(Color.WHITE);
         cellParams.getDefaultDrawStyle().setStrokeColor(Color.WHITE);
-        cellParams.getSetting(Constant.LINE_COLUMN).addFrozenItemIndex(0);
+//        cellParams.getSetting(Constant.LINE_COLUMN).addFrozenItemIndex(0);
+//        cellParams.getSetting(Constant.LINE_ROW).addFrozenItemIndex(2);
 
         //global
         GlobalParams globalParams = new GlobalParams();
         globalParams.setStrokeColor(Color.WHITE);
         globalParams.setStrokeWidth(4);
-        globalParams.setIsDrawCellStroke(false);
+        globalParams.setIsDrawCellStroke(true);
         globalParams.setIsDrawMask(true);
-        globalParams.setMaskWidthPercent(1, 0.3f);
+        globalParams.setMaskWidthPercent(2, 0.8f);
         globalParams.setMaskAlpha(100);
         globalParams.setMaskStartLine(1);
         globalParams.setMaskColor(Color.WHITE);
         globalParams.setMaskSplitLineColor(Color.WHITE);
         hvs.setParams(globalParams, menuParams, cellParams);
-        hvs.setTable(table);
+//        hvs.setTable(table);
+        hvs.setTable(TableEntity.getExampleTable());
+        hvs.setOnCellClickListener(this);
     }
 
     private void changedCell(TableEntity table, int row, int col) {
         CellEntity cell = table.getCell(row, col);
         cell.setSpanColumnCount(2);
         table.addCellAutoSpan(cell);
+    }
+
+    @Override
+    public void onCellClick(CellEntity cell, int row, int column) {
+
     }
 }

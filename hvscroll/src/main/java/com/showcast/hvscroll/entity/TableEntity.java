@@ -24,36 +24,20 @@ public class TableEntity {
     public static final TableEntity getExampleTable() {
         TableEntity table = new TableEntity(35, 11);
 
-        table.addCellAutoSpan(new CellEntity(0, 0, "text"), new Point(8, 5), new Point(11, 7));
+//        table.addCellAutoSpan(new CellEntity(0, 0, "text"), new Point(8, 5), new Point(11, 7));
 
-//        for (int i = 0; i < 11; i++) {
-//            table.addMenu(table.newRowMenu(i, "title-" + i), Constant.MENU_ROW);
-//        }
-//
-//        for (int i = 0; i < 11; i++) {
-//            table.addMenu(table.newColumnMenu(i, "title-1" + i), Constant.MENU_COLUMN);
-////            if ((i & 1) == 1) {
-////            table.addCellAutoSpan(new CellEntity(i, 0, "cell"));
-////            if ((i & 1) == 1) {
-////                for (int k = 1; k < 6; k++) {
-////                    CellEntity newCell = new CellEntity(i, k * 2 - 1, "long cell");
-////                    //table.addCellAutoSpan(newCell, 2, false);
-////                    newCell.setSpanColumnCount(2);
-////                    newCell.setSpanRowCount(2);
-////                    table.addCellAutoSpan(newCell);
-////                }
-////            }
-////            } else {
-//            CellEntity cell = new CellEntity(i, 0, "first-0");
-//            cell.setDrawStyleTag("first");
-//            table.addCellAutoSpan(cell);
-//            for (int j = 1; j < 11; j++) {
-//                CellEntity newCell = new CellEntity(i, j, i + "-" + j);
-//                table.addCellWithoutSpan(newCell);
-//            }
-////            }
-//        }
+        for (int i = 0; i < 11; i++) {
+            table.addMenu(table.newRowMenu(i, "title-" + i), Constant.MENU_ROW);
+        }
+        for (int i = 0; i < 35; i++) {
+            table.addMenu(table.newColumnMenu(i, "title-" + i), Constant.MENU_COLUMN);
+        }
 
+        for (int i = 0; i < 35; i++) {
+            for (int j = 0; j < 11; j++) {
+                table.addCellWithoutSpan(new CellEntity(i, j, "cell " + i + "-" + j));
+            }
+        }
 
 //        Log.i("count", "row/count = " + table.getRowCount() + "/" + table.getColumnCount());
 //        table.autoUpdateRowColumnCount();
