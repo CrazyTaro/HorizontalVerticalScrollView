@@ -12,6 +12,8 @@ public class MenuParams extends BaseParams {
     private boolean mIsDrawRowMenu = false;
     //是否绘制列菜单
     private boolean mIsDrawColumnMenu = false;
+    //是否先绘制行菜单,决定行列菜单的绘制顺序.
+    private boolean mIsDrawRowMenuFirst = false;
     private MenuSetting[] mMenuSettings;
 
     public MenuParams() {
@@ -46,12 +48,20 @@ public class MenuParams extends BaseParams {
         mIsDrawColumnMenu = isDraw;
     }
 
+    public void setIsDrawRowMenuFirst(boolean isFirst) {
+        mIsDrawRowMenuFirst = isFirst;
+    }
+
     public boolean isDrawRowMenu() {
         return mIsDrawRowMenu;
     }
 
     public boolean isDrawColumnMenu() {
         return mIsDrawColumnMenu;
+    }
+
+    public boolean isDrawRowMenuFirst() {
+        return mIsDrawRowMenuFirst;
     }
 
     /**
