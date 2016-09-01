@@ -7,7 +7,7 @@ import com.showcast.hvscroll.params.Constant;
 /**
  * Created by taro on 16/8/17.
  */
-public class BaseDrawStyle {
+public class BaseDrawStyle implements Cloneable {
     protected int mStrokeColor = Constant.DEFAULT_COLOR;
     protected int mStrokeWidth = Constant.DEFAULT_STROKE_WIDTH;
     protected int mTextColor = Constant.DEFAULT_TEXT_COLOR;
@@ -92,5 +92,18 @@ public class BaseDrawStyle {
 
     public boolean isDraw() {
         return mIsDraw;
+    }
+
+    @Override
+    public BaseDrawStyle clone() {
+        try {
+            //对象中不存在引用对象,不需要深度复制
+            return (BaseDrawStyle) super.clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+            BaseDrawStyle newStyle = new BaseDrawStyle(this.mTextColor, this.mTextSize
+                    , this.mStrokeWidth, this.mStrokeColor, this.mBackgroundColor, this.mSelectBgColor);
+            return newStyle;
+        }
     }
 }
