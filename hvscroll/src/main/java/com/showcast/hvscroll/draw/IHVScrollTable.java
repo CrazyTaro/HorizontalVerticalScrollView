@@ -3,6 +3,7 @@ package com.showcast.hvscroll.draw;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import com.showcast.hvscroll.entity.CellEntity;
 import com.showcast.hvscroll.entity.TableEntity;
 import com.showcast.hvscroll.params.CellParams;
 import com.showcast.hvscroll.params.GlobalParams;
@@ -50,6 +51,14 @@ public interface IHVScrollTable {
      */
     public void setCellParams(CellParams cell);
 
+
+    /**
+     * 设置单元格的监听对象
+     *
+     * @param listener
+     */
+    public void setOnCellClickListener(OnCellClickListener listener);
+
     /**
      * 获取表格
      *
@@ -81,4 +90,18 @@ public interface IHVScrollTable {
      */
     @Nullable
     public CellParams getCellParams();
+
+    /**
+     * listener called when a cell is clicked.
+     */
+    public interface OnCellClickListener {
+        /**
+         * a cell is clicked
+         *
+         * @param cell
+         * @param row    rowIndex of cell
+         * @param column columnIndex of cell
+         */
+        public void onCellClick(CellEntity cell, int row, int column);
+    }
 }
