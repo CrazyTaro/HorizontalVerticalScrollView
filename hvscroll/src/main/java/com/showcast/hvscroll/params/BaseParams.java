@@ -1,23 +1,27 @@
 package com.showcast.hvscroll.params;
 
+import android.graphics.Point;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.util.ArrayMap;
 
 import com.showcast.hvscroll.draw.BaseDrawStyle;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
- * base params.all the sub params extend from this class.this class offers the base params for setting.<br/>
+ * base params.all the sub params extend from this class.this class offers the base params for setting.<br>
  * 基础参数类,此类提供了基本的参数设置,包括宽高及绘制样式,数据存储等.
  * Created by taro on 16/8/19.
  */
 public abstract class BaseParams {
+    protected float mWidthPercent;
+    protected float mHeightPercent;
+    @Constant.StyleSize
+    protected int mStyleSize = Constant.STYLE_USE_FIXED_SIZE;
     protected int mWidth;
     protected int mHeight;
     //extended draw style,you can add the custom draw style here
@@ -41,14 +45,40 @@ public abstract class BaseParams {
     }
 
     /**
-     * a method will be called after constructing class.<br/>
+     * a method will be called after constructing class.<br>
      * 构造方法后一定会被调用的方法,当子类需要初始化某些数据时,可以重写此方法.
      */
     protected void initialConstructor() {
     }
 
     /**
-     * set width,true if successful or false if failed.<br/>
+     * update base params from another params.<br>
+     * 将当前的对象状态同步更新到指定对象的状态
+     *
+     * @param params        nothing is changed when this params is null.<br>
+     *                      当此参数为null不会改变任何状态
+     * @param isCloneObject clone all fields,including all objects if true,or just clone basic fields if false.<br>
+     *                      若该字段为true,复制所有的字段,包括所有对象字段;否则仅复制基本数据类型字段
+     */
+    public void updateParams(BaseParams params, boolean isCloneObject) {
+        if (params != null) {
+            this.mWidthPercent = params.mWidthPercent;
+            this.mHeightPercent = params.mHeightPercent;
+            this.mWidth = params.mWidth;
+            this.mHeight = params.mHeight;
+            this.mStyleSize = params.mStyleSize;
+            if (isCloneObject) {
+                this.mDefaultDrawStyle = params.mDefaultDrawStyle.clone();
+                ArrayMap<String, BaseDrawStyle> newMap = new ArrayMap<>(params.mStyleMap.size());
+                for (String key : params.mStyleMap.keySet()) {
+                    newMap.put(key, params.mStyleMap.get(key).clone());
+                }
+            }
+        }
+    }
+
+    /**
+     * set width,true if successful or false if failed.<br>
      * 设置成功返回true,否则返回false
      *
      * @param width
@@ -64,7 +94,7 @@ public abstract class BaseParams {
     }
 
     /**
-     * set height,true if successful or false if failed.<br/>
+     * set height,true if successful or false if failed.<br>
      * 设置成功返回true,否则返回false.
      *
      * @param height
@@ -79,6 +109,66 @@ public abstract class BaseParams {
         }
     }
 
+    public void setWidthAndHeightPercent(@Constant.FloatPercent float widthPercent, @Constant.FloatPercent float heightPercent, @Constant.StyleSize int styleSize) {
+        mWidthPercent = widthPercent;
+        mHeightPercent = heightPercent;
+        mStyleSize = styleSize;
+    }
+
+    @NonNull
+    public Point getDrawWidthAndHeight(Point outPoint, int viewWidth, int viewHeight) {
+        if (outPoint == null) {
+            outPoint = new Point();
+        }
+        if (isDrawUseSizePercent()) {
+            int width, height;
+            switch (mStyleSize) {
+                case Constant.STYLE_BASE_ON_PARENT_SIZE:
+                    width = (int) (viewWidth * mWidthPercent);
+                    height = (int) (viewHeight * mHeightPercent);
+                    break;
+                case Constant.STYLE_BASE_ON_PARENT_WIDTH:
+                    width = (int) (viewWidth * mWidthPercent);
+                    height = (int) (viewWidth * mHeightPercent);
+                    break;
+                case Constant.STYLE_BASE_ON_PARENT_HEIGHT:
+                    width = (int) (viewHeight * mWidthPercent);
+                    height = (int) (viewHeight * mHeightPercent);
+                    break;
+                case Constant.STYLE_USE_FIXED_SIZE:
+                default:
+                    width = mWidth;
+                    height = mHeight;
+                    break;
+            }
+            outPoint.set(width, height);
+        } else {
+            outPoint.set(mWidth, mHeight);
+        }
+        return outPoint;
+    }
+
+    public boolean isDrawUseSizePercent() {
+        if (mWidthPercent <= 0 || mHeight <= 0 || mStyleSize == Constant.STYLE_USE_FIXED_SIZE) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public float getWidthPercent() {
+        return mWidthPercent;
+    }
+
+    public float getHeightPercent() {
+        return mHeightPercent;
+    }
+
+    @Constant.StyleSize
+    public int getStyleSize() {
+        return mStyleSize;
+    }
+
     public int getWidth() {
         return mWidth;
     }
@@ -88,7 +178,7 @@ public abstract class BaseParams {
     }
 
     /**
-     * add new draw style.the style will be matched by tag,so please make sure the tag is unique.<br/>
+     * add new draw style.the style will be matched by tag,so please make sure the tag is unique.<br>
      * 添加新的绘制样式.样式将会通过tag进行匹配,应该确保tag是唯一的.
      *
      * @param tag       the unique tag for a style.
@@ -116,7 +206,7 @@ public abstract class BaseParams {
     }
 
     /**
-     * set default draw style,you can replace default style with your custom style,but the style can't be null.<br/>
+     * set default draw style,you can replace default style with your custom style,but the style can't be null.<br>
      * 设置默认的样式,你可以替换掉原始的默认样式.
      *
      * @param style
@@ -131,7 +221,7 @@ public abstract class BaseParams {
     }
 
     /**
-     * a abstract method to get setting.which kind of settings is decided by sub class.<br/>
+     * a abstract method to get setting.which kind of settings is decided by sub class.<br>
      * 获取某个设置,该设置的具体功能由子类决定.父类仅提供此方法的接口.
      *
      * @param which 筛选的参数.
@@ -140,7 +230,7 @@ public abstract class BaseParams {
     public abstract Setting getSetting(int which);
 
     /**
-     * a common setting.<br/>
+     * a common setting.<br>
      * 为子类提供通用的设置对象
      */
     public static class Setting {
@@ -153,11 +243,11 @@ public abstract class BaseParams {
         }
 
         /**
-         * add the index of frozen columns or rows.<br/>
+         * add the index of frozen columns or rows.<br>
          * 添加需要固定显示的行或者列
          *
          * @param index
-         * @return true if add successfully or false if add unsuccessfully.<br/>
+         * @return true if add successfully or false if add unsuccessfully.<br>
          * 添加成功返回true,否则返回false
          */
         public boolean addFrozenItemIndex(int index) {
@@ -173,7 +263,7 @@ public abstract class BaseParams {
         }
 
         /**
-         * check if a index of column/row need to be frozen.<br/>
+         * check if a index of column/row need to be frozen.<br>
          * 检测指定index是否需要固定行或列.
          *
          * @param index
@@ -200,7 +290,7 @@ public abstract class BaseParams {
         }
 
         /**
-         * get the last frozen item index.return -1 if not exist.the last index is the biggest index of frozen item.<br/>
+         * get the last frozen item index.return -1 if not exist.the last index is the biggest index of frozen item.<br>
          * 返回最后一个固定行列的索引,若不存在返回-1,最后一个索引应该是最大的.
          *
          * @return
@@ -210,7 +300,7 @@ public abstract class BaseParams {
         }
 
         /**
-         * get the first frozen item index,return -1 if not exist.the first index is the smallest index of frozen item.<br/>
+         * get the first frozen item index,return -1 if not exist.the first index is the smallest index of frozen item.<br>
          * 返回第一个固定行列的索引,若不存在返回-1,第一个索引应该最小的.
          *
          * @return
@@ -220,7 +310,7 @@ public abstract class BaseParams {
         }
 
         /***
-         * return the set less than the index.<br/>
+         * return the set less than the index.<br>
          * 获取小于指定索引的序列.
          *
          * @param index
@@ -236,7 +326,7 @@ public abstract class BaseParams {
         }
 
         /**
-         * return the set greater than the index.<br/>
+         * return the set greater than the index.<br>
          * 获取大于指定索引的序列.
          *
          * @param index
@@ -253,7 +343,7 @@ public abstract class BaseParams {
 
         /**
          * return the sorted index of frozen items.do not return the set to prevent caller to change the data in the set directly.
-         * maybe return a array which length is 0 if no data.<br/>
+         * maybe return a array which length is 0 if no data.<br>
          * 返回存储的固定行列的值,此值已经完成排序.无数据时返回长度为0的数组.
          *
          * @return
