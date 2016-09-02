@@ -1,6 +1,5 @@
 package com.showcast.hvscroll.params;
 
-import android.graphics.Point;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.util.ArrayMap;
@@ -24,6 +23,8 @@ public abstract class BaseParams {
     protected int mStyleSize = Constant.STYLE_USE_FIXED_SIZE;
     protected int mWidth;
     protected int mHeight;
+    protected int mDrawWidth;
+    protected int mDrawHeight;
     //extended draw style,you can add the custom draw style here
     //扩展的样式存储
     protected Map<String, BaseDrawStyle> mStyleMap;
@@ -109,45 +110,79 @@ public abstract class BaseParams {
         }
     }
 
+    /**
+     * set the dynamic width and height which rely on parent view's width or height.once you use this method,
+     * when drawing the cells the width will be set the value after calculating.<br>
+     * 设置单元格的宽高依赖于view宽高的百分比.
+     *
+     * @param widthPercent  the percent used for width.notice that the percent maybe any one of the view width and height,it's depended on styleSize<br>
+     *                      用于宽度的百分比,该百分比可能是对应view中的宽或者高的任意一个,由下面的style决定.
+     * @param heightPercent the percent used for height.<br>
+     *                      用于高度的百分比.
+     * @param styleSize     用于指定百分比依赖的对象.可分别指定都依赖于view的width或者height;也可以widthPercent依赖于width,heightPercent依赖于height;
+     */
     public void setWidthAndHeightPercent(@Constant.FloatPercent float widthPercent, @Constant.FloatPercent float heightPercent, @Constant.StyleSize int styleSize) {
         mWidthPercent = widthPercent;
         mHeightPercent = heightPercent;
         mStyleSize = styleSize;
     }
 
+    /**
+     * calculate the cell width and height which used to draw.<br>
+     * 计算单元格的宽高用于绘制.
+     *
+     * @param viewWidth  width of view.
+     * @param viewHeight height of view.
+     * @return
+     */
     @NonNull
-    public Point getDrawWidthAndHeight(Point outPoint, int viewWidth, int viewHeight) {
-        if (outPoint == null) {
-            outPoint = new Point();
-        }
+    public void computeDrawWidthAndHeight(int viewWidth, int viewHeight) {
         if (isDrawUseSizePercent()) {
-            int width, height;
             switch (mStyleSize) {
-                case Constant.STYLE_BASE_ON_PARENT_SIZE:
-                    width = (int) (viewWidth * mWidthPercent);
-                    height = (int) (viewHeight * mHeightPercent);
+                case Constant.STYLE_RELY_ON_PARENT_SIZE:
+                    this.mDrawWidth = (int) (viewWidth * mWidthPercent);
+                    this.mDrawHeight = (int) (viewHeight * mHeightPercent);
                     break;
-                case Constant.STYLE_BASE_ON_PARENT_WIDTH:
-                    width = (int) (viewWidth * mWidthPercent);
-                    height = (int) (viewWidth * mHeightPercent);
+                case Constant.STYLE_RELY_ON_PARENT_WIDTH:
+                    this.mDrawWidth = (int) (viewWidth * mWidthPercent);
+                    this.mDrawHeight = (int) (viewWidth * mHeightPercent);
                     break;
-                case Constant.STYLE_BASE_ON_PARENT_HEIGHT:
-                    width = (int) (viewHeight * mWidthPercent);
-                    height = (int) (viewHeight * mHeightPercent);
+                case Constant.STYLE_RELY_ON_PARENT_HEIGHT:
+                    this.mDrawWidth = (int) (viewHeight * mWidthPercent);
+                    this.mDrawHeight = (int) (viewHeight * mHeightPercent);
                     break;
                 case Constant.STYLE_USE_FIXED_SIZE:
                 default:
-                    width = mWidth;
-                    height = mHeight;
+                    this.mDrawWidth = mWidth;
+                    this.mDrawHeight = mHeight;
                     break;
             }
-            outPoint.set(width, height);
-        } else {
-            outPoint.set(mWidth, mHeight);
         }
-        return outPoint;
     }
 
+    /**
+     * return the width of cell for drawing.
+     *
+     * @return
+     */
+    public int getDrawWidth() {
+        return mDrawWidth;
+    }
+
+    /**
+     * return the height of cell for drawing.
+     *
+     * @return
+     */
+    public int getDrawHeight() {
+        return mDrawHeight;
+    }
+
+    /**
+     * check if draw the cell by using size percent.
+     *
+     * @return
+     */
     public boolean isDrawUseSizePercent() {
         if (mWidthPercent <= 0 || mHeight <= 0 || mStyleSize == Constant.STYLE_USE_FIXED_SIZE) {
             return false;
@@ -156,23 +191,48 @@ public abstract class BaseParams {
         }
     }
 
+    /**
+     * return the percent saved for cell width.
+     *
+     * @return
+     */
     public float getWidthPercent() {
         return mWidthPercent;
     }
 
+    /**
+     * return the percent saved for cell height.
+     *
+     * @return
+     */
     public float getHeightPercent() {
         return mHeightPercent;
     }
 
+    /**
+     * return the style for percent drawing.
+     *
+     * @return
+     */
     @Constant.StyleSize
     public int getStyleSize() {
         return mStyleSize;
     }
 
+    /**
+     * get the stored fixed width.you need to use the method {@link #getDrawWidth()} to get the cell width for drawing.
+     *
+     * @return
+     */
     public int getWidth() {
         return mWidth;
     }
 
+    /**
+     * get the stored fixed height.you need to use the method {@link #getDrawHeight()} to get the cell height for drawing.
+     *
+     * @return
+     */
     public int getHeight() {
         return mHeight;
     }
