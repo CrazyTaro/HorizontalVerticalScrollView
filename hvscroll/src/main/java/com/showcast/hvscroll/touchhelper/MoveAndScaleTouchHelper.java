@@ -162,7 +162,7 @@ public class MoveAndScaleTouchHelper {
         this.mTempDrawOffsetY = offsetY;
     }
 
-    public void setNoticationEvent(INotificationEvent event) {
+    public void setNotificationEvent(INotificationEvent event) {
         this.mNotificationEvent = event;
     }
 
@@ -573,7 +573,7 @@ public class MoveAndScaleTouchHelper {
      */
     public interface INotificationEvent {
         /**
-         * 开始移动事件,此事件在即将可能发生第一次移动时进行通知,只通知一次<br/>
+         * 开始移动事件,此事件在即将可能发生第一次移动时进行通知,只通知一次<br>
          * 并且在{@link IMoveEvent#isCanMovedOnX(PointF, PointF)} 与 {@link IMoveEvent#isCanMovedOnY(PointF, PointF)} 这两个方法之前进行回调,确保可以通过此事件从而对移动方向的确定
          *
          * @param mouseDownX 移动按下的点的X轴坐标值

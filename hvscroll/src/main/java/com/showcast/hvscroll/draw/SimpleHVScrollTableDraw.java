@@ -56,13 +56,13 @@ public class SimpleHVScrollTableDraw extends AbsHorizontalVerticalScrollTableDra
     protected int getMoveDirection(float mouseDown, float mouseUp) {
         CellParams cellParams = this.getCellParams();
         if (cellParams != null) {
-            if (mouseDown < cellParams.getWidth()) {
+            if (mouseDown < cellParams.getDrawWidth()) {
                 return Constant.MOVE_DIRECTION_VERTICAL;
             } else {
                 return Constant.MOVE_DIRECTION_HORIZONTAL;
             }
         } else {
-            return Constant.MOVE_DIRECTOIN_NONE;
+            return Constant.MOVE_DIRECTION_NONE;
         }
     }
 

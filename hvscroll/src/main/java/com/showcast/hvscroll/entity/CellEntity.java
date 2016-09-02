@@ -20,7 +20,7 @@ public class CellEntity {
     protected String mStyleTag = Constant.DEFAULT_STYLE_TAG;
 
     /**
-     * construct a new cell.<br/>
+     * construct a new cell.<br>
      * 创建一个新的单元格.
      *
      * @param row
@@ -38,7 +38,7 @@ public class CellEntity {
     }
 
     /**
-     * the span count of row and column is {@link Constant#DEFAULT_SPAN_COUNT};<br/>
+     * the span count of row and column is {@link Constant#DEFAULT_SPAN_COUNT};<br>
      * 合并的单元格数量为默认值.
      *
      * @param row
@@ -50,7 +50,7 @@ public class CellEntity {
     }
 
     /**
-     * the span count of row and column is {@link Constant#DEFAULT_SPAN_COUNT};<br/>
+     * the span count of row and column is {@link Constant#DEFAULT_SPAN_COUNT};<br>
      * 合并的单元格数量为默认值.
      *
      * @param row
@@ -62,7 +62,7 @@ public class CellEntity {
 
     /**
      * set the index of row and column.do not use this method casually.
-     * the index decide whether this cell will be drawn or not.{@link #isNeedToDraw(int, int)}<br/>
+     * the index decide whether this cell will be drawn or not.{@link #isNeedToDraw(int, int)}<br>
      * 设置单元格的行列索引,不要随便使用此方法,设置的索引决定了此单元格是否会被绘制.详见链接方法.
      *
      * @param row
@@ -93,7 +93,7 @@ public class CellEntity {
     }
 
     /**
-     * set the span count of row.<br/>
+     * set the span count of row.<br>
      * 设置在行方向上合并的单元格数.
      *
      * @param spanCount
@@ -105,7 +105,7 @@ public class CellEntity {
     }
 
     /**
-     * set the span count of column.<br/>
+     * set the span count of column.<br>
      * 设置在列方向上合并的单元格数.
      *
      * @param spanCount
@@ -117,7 +117,7 @@ public class CellEntity {
     }
 
     /**
-     * set the draw style tag for cell.<br/>
+     * set the draw style tag for cell.<br>
      * 设置绘制的样式标志.
      *
      * @param tag
@@ -156,7 +156,7 @@ public class CellEntity {
     }
 
     /**
-     * when the rowIndex and columnIndex are different from the index in cell,cell will not be drawn.<br/>
+     * when the rowIndex and columnIndex are different from the index in cell,cell will not be drawn.<br>
      * 当指定的index与单元格中的index不同时,此单元格不会进行绘制.
      *
      * @param rowIndex
@@ -178,7 +178,7 @@ public class CellEntity {
     }
 
     /**
-     * get the cell draw style tag.<br/>
+     * get the cell draw style tag.<br>
      * 获取单元格绘制的样式标志.
      *
      * @return
