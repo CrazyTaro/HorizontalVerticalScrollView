@@ -37,7 +37,7 @@ public class Constant {
     /**
      * the cell is no a menu
      */
-    public static final int MENU_NONE = -1;
+    public static final int MENU_NONE = 0;
 
     /**
      * default column index of row and column menu
@@ -59,7 +59,7 @@ public class Constant {
     public static final int LINE_COLUMN = 1;
 
     @Retention(RetentionPolicy.SOURCE)
-    @IntDef(value = {MOVE_DIRECTION_HORIZONTAL, MOVE_DIRECTION_VERTICAL, MOVE_DIRECTION_BOTH, MOVE_DIRECTOIN_NONE})
+    @IntDef(value = {MOVE_DIRECTION_HORIZONTAL, MOVE_DIRECTION_VERTICAL, MOVE_DIRECTION_BOTH, MOVE_DIRECTION_NONE})
     public @interface MoveDirection {
     }
 
@@ -74,31 +74,31 @@ public class Constant {
     /**
      * both direction
      */
-    public static final int MOVE_DIRECTION_BOTH = Integer.MAX_VALUE;
+    public static final int MOVE_DIRECTION_BOTH = -2;
     /**
      * both directions are not allowed to move.
      */
-    public static final int MOVE_DIRECTOIN_NONE = Integer.MIN_VALUE;
+    public static final int MOVE_DIRECTION_NONE = 2;
 
 
     @Retention(RetentionPolicy.SOURCE)
-    @IntDef(value = {STYLE_USE_FIXED_SIZE, STYLE_BASE_ON_PARENT_SIZE, STYLE_BASE_ON_PARENT_WIDTH, STYLE_BASE_ON_PARENT_HEIGHT})
+    @IntDef(value = {STYLE_USE_FIXED_SIZE, STYLE_RELY_ON_PARENT_SIZE, STYLE_RELY_ON_PARENT_WIDTH, STYLE_RELY_ON_PARENT_HEIGHT})
     public @interface StyleSize {
     }
 
     public static final int STYLE_USE_FIXED_SIZE = -1;
     /**
-     * width and height percent base on their parent's sizes.
+     * width and height percent rely on their parent's sizes.
      */
-    public static final int STYLE_BASE_ON_PARENT_SIZE = 0;
+    public static final int STYLE_RELY_ON_PARENT_SIZE = 0;
     /**
-     * width and height just base on parent's width
+     * width and height just rely on parent's width
      */
-    public static final int STYLE_BASE_ON_PARENT_WIDTH = 1;
+    public static final int STYLE_RELY_ON_PARENT_WIDTH = 1;
     /**
-     * width and height just base on parent's height
+     * width and height just rely on parent's height
      */
-    public static final int STYLE_BASE_ON_PARENT_HEIGHT = 2;
+    public static final int STYLE_RELY_ON_PARENT_HEIGHT = 2;
 
     /**
      * default style tag
