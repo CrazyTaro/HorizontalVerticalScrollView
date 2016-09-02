@@ -34,20 +34,15 @@ public class Constant {
      * menu type of column menu
      */
     public static final int MENU_COLUMN = 1;
-
-    @Retention(RetentionPolicy.SOURCE)
-    @IntDef(value = {FIXED_MENU_INDEX_ROW, FIXED_MENU_INDEX_COLUMN})
-    public @interface FixedMenuIndex {
-    }
+    /**
+     * the cell is no a menu
+     */
+    public static final int MENU_NONE = -1;
 
     /**
-     * default row index of row menu
+     * default column index of row and column menu
      */
-    public static final int FIXED_MENU_INDEX_ROW = 0;
-    /**
-     * default column index of column menu
-     */
-    public static final int FIXED_MENU_INDEX_COLUMN = 0;
+    public static final int FIXED_MENU_INDEX = 0;
 
     @Retention(RetentionPolicy.SOURCE)
     @IntDef(value = {LINE_ROW, LINE_COLUMN})
