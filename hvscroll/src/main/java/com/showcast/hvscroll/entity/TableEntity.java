@@ -83,11 +83,11 @@ public class TableEntity {
     }
 
     public CellEntity newColumnMenu(int row, String text) {
-        return new CellEntity(row, Constant.FIXED_MENU_INDEX_COLUMN, text);
+        return new CellEntity(row, Constant.FIXED_MENU_INDEX, text);
     }
 
     public CellEntity newRowMenu(int column, String text) {
-        return new CellEntity(Constant.FIXED_MENU_INDEX_ROW, column, text);
+        return new CellEntity(Constant.FIXED_MENU_INDEX, column, text);
     }
 
     /**
@@ -97,10 +97,12 @@ public class TableEntity {
     public void addMenu(@NonNull CellEntity menu, @Constant.MenuType int whichMenu) {
         switch (whichMenu) {
             case Constant.MENU_ROW:
+                menu.setRowAndColumnIndex(Constant.FIXED_MENU_INDEX, menu.getColumnIndex());
                 mRowMenuList.put(menu.getColumnIndex(), menu);
                 this.updateMenuCount(menu.getColumnIndex() + 1, 0);
                 break;
             case Constant.MENU_COLUMN:
+                menu.setRowAndColumnIndex(menu.getRowIndex(), Constant.FIXED_MENU_INDEX);
                 mColumnMenuList.put(menu.getRowIndex(), menu);
                 this.updateMenuCount(0, menu.getRowIndex() + 1);
                 break;
@@ -370,6 +372,25 @@ public class TableEntity {
                 return mColumnMenuList == null ? 0 : mMenuCountInColumn;
             default:
                 return 0;
+        }
+    }
+
+    /**
+     * get menu entity from row or column by pointing out the menu type.<br>
+     * 获取指定菜单类型的某个菜单
+     *
+     * @param menuIndex
+     * @param menuType
+     * @return
+     */
+    public CellEntity getMenu(int menuIndex, @Constant.MenuType int menuType) {
+        switch (menuType) {
+            case Constant.MENU_ROW:
+                return this.getRowMenu(menuIndex);
+            case Constant.MENU_COLUMN:
+                return this.getColumnMenu(menuIndex);
+            default:
+                return null;
         }
     }
 
