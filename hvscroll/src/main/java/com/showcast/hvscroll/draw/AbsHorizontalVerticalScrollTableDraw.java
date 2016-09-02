@@ -164,28 +164,10 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
                 this.drawMenu(mTable, mMenuParams, Constant.MENU_ROW, mRowPoint, offsetX, offsetY, mPaint, canvas);
                 this.drawMenu(mTable, mMenuParams, Constant.MENU_COLUMN, mColumnPoint, offsetX, offsetY, mPaint, canvas);
             } else {
-//                //draw column first
+                //draw column first
                 this.drawMenu(mTable, mMenuParams, Constant.MENU_COLUMN, mColumnPoint, offsetX, offsetY, mPaint, canvas);
                 this.drawMenu(mTable, mMenuParams, Constant.MENU_ROW, mRowPoint, offsetX, offsetY, mPaint, canvas);
             }
-//            if (mMenuParams.isDrawRowMenuFirst()) {
-//                //draw row menu if necessarily
-//                if (mMenuParams.isDrawRowMenu()) {
-//                    this.drawRowMenu(mTable, mMenuParams, mRowPoint, 0, 0, offsetX, offsetY, mPaint, canvas);
-//                }
-//                //draw column menu if necessarily
-//                if (mMenuParams.isDrawColumnMenu()) {
-//                    this.drawColumnMenu(mTable, mMenuParams, mColumnPoint, 0, 0, offsetX, offsetY, mPaint, canvas);
-//                }
-//            } else {
-//                //draw column first
-//                if (mMenuParams.isDrawColumnMenu()) {
-//                    this.drawColumnMenu(mTable, mMenuParams, mColumnPoint, 0, 0, offsetX, offsetY, mPaint, canvas);
-//                }
-//                if (mMenuParams.isDrawRowMenu()) {
-//                    this.drawRowMenu(mTable, mMenuParams, mRowPoint, 0, 0, offsetX, offsetY, mPaint, canvas);
-//                }
-//            }
         }
         if (mGlobalParams.isDrawCellStroke()) {
             this.drawCellBackgroundStroke(mTable, mCellParams, mColumnPoint.x, mRowPoint.x,
@@ -358,121 +340,7 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
         //changed the startDrawPosition if menu need to be frozen.
         outPoint.y = isRow ? outPoint.y + menuCount : outPoint.y;
     }
-
-
-    //draw the row menu, menu will fix on the top ,for now
-    @Deprecated
-    /**
-     * do not use any more
-     */
-    protected void drawRowMenu(TableEntity table, MenuParams params, @NonNull Point outPoint, int startDrawX, int startDrawY, int offsetX, int offsetY, Paint paint, Canvas canvas) {
-        int width, height, drawOffsetX, drawOffsetY = 0;
-        MenuParams.MenuSetting setting = params.getSetting(Constant.MENU_ROW);
-        width = params.getWidth();
-        height = params.getHeight();
-        if (table != null && table.getMenuCount(Constant.MENU_ROW) > 0) {
-            //ignore offset values if menu is frozen
-            //so that menu will not be moved
-            if (setting.isFrozenX()) {
-                //when frozen,set the original offset to 0
-                //this property has priority
-                offsetX = 0;
-            }
-            if (setting.isFrozenY()) {
-                offsetY = 0;
-            }
-            //copy the offset to a new var to make sure the original offset not changed.
-            drawOffsetX = offsetX;
-            drawOffsetY = offsetY;
-
-            this.calculateSkipUnseenCell(mSkipRect, width, height, startDrawX, startDrawY, 1, table.getMenuCount(Constant.MENU_ROW), drawOffsetX, drawOffsetY);
-            for (int i = mSkipRect.right; i < mSkipRect.bottom; i++) {
-                //get menu
-                CellEntity menu = table.getRowMenu(i);
-                this.drawCommonCell(menu, params, false, Constant.FIXED_MENU_INDEX, i,
-                        drawOffsetX, drawOffsetY,
-                        startDrawX, startDrawY, paint, canvas);
-            }
-
-            //draw the frozen menu item
-            if (setting.getFrozenItemSize() > 0) {
-                int[] result = setting.getValueFrozenItems();
-                for (int i : result) {
-                    //get frozen menu
-                    CellEntity menu = table.getRowMenu(i);
-                    drawOffsetX = 0;
-                    this.drawCommonCell(menu, params, false, Constant.FIXED_MENU_INDEX, i,
-                            drawOffsetX, drawOffsetY,
-                            startDrawX, startDrawY, paint, canvas);
-                }
-            }
-            //when the frozen column draw,the drawStartY must be moved to height
-            outPoint.y = outPoint.x = height;
-        }
-        //calculate the length the menu has moved for canvas clipping
-        outPoint.x += drawOffsetY;
-        //calculate the length the cells start to draw(after menu drawing)
-        //changed the startDrawY if menu need to be frozen.
-        outPoint.y = setting.isFrozenY() ? outPoint.y + drawOffsetY : outPoint.y;
-    }
-
-    @Deprecated
-    /**
-     * do not use any more
-     */
-    protected void drawColumnMenu(TableEntity table, MenuParams params, @NonNull Point outPoint, int startDrawX, int startDrawY, int offsetX, int offsetY, Paint paint, Canvas canvas) {
-        int width, height, drawOffsetX = 0, drawOffsetY;
-        MenuParams.MenuSetting setting = params.getSetting(Constant.MENU_COLUMN);
-        width = params.getWidth();
-        height = params.getHeight();
-        if (table != null && table.getMenuCount(Constant.MENU_COLUMN) > 0) {
-            //ignore offset values if menu is frozen
-            //so that menu will not be moved
-            if (setting.isFrozenX()) {
-                //when frozen,set the original offset to 0
-                //this property has priority
-                offsetX = 0;
-            }
-            if (setting.isFrozenY()) {
-                offsetY = 0;
-            }
-            //copy the offset to a new var to make sure the original offset not changed.
-            drawOffsetX = offsetX;
-            drawOffsetY = offsetY;
-
-            this.calculateSkipUnseenCell(mSkipRect, width, height, startDrawX, startDrawY, table.getMenuCount(Constant.MENU_COLUMN), 1, drawOffsetX, drawOffsetY);
-            for (int i = mSkipRect.left; i < mSkipRect.top; i++) {
-                //get menu
-                CellEntity menu = table.getColumnMenu(i);
-                //draw column menu
-                this.drawCommonCell(menu, params, false, i, Constant.FIXED_MENU_INDEX,
-                        drawOffsetX, drawOffsetY,
-                        startDrawX, startDrawY, paint, canvas);
-            }
-
-            //draw the frozen menu item
-            if (setting.getFrozenItemSize() > 0) {
-                int[] result = setting.getValueFrozenItems();
-                for (int i : result) {
-                    //get frozen menu
-                    CellEntity menu = table.getRowMenu(i);
-                    drawOffsetX = 0;
-                    this.drawCommonCell(menu, params, false, i, Constant.FIXED_MENU_INDEX,
-                            drawOffsetX, drawOffsetY,
-                            startDrawX, startDrawY, paint, canvas);
-                }
-            }
-            //when the frozen column draw,the drawStartX must be moved to width
-            outPoint.y = width;
-            outPoint.x = width;
-        }
-        //calculate the length the menu has moved for canvas clipping
-        outPoint.x += drawOffsetX;
-        //calculate the length the cells start to draw(after menu drawing)
-        //changed the startDrawX when this menu need to be frozen.
-        outPoint.y = setting.isFrozenX() ? outPoint.y += drawOffsetX : outPoint.y;
-    }
-
+    
     /**
      * draw the cell stroke on the background.when the cell set to draw its stroke,this will be covered.<br/>
      * 在背景色上绘制界面单元格的划分线.单元格中所有的绘制操作将会覆盖对应区域的界面(不会影响到单元格的绘制)
