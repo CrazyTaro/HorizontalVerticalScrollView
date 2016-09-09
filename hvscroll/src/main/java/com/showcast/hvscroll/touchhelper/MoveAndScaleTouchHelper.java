@@ -596,7 +596,7 @@ public class MoveAndScaleTouchHelper {
         public abstract void startScale(float newScaleRate);
 
         /**
-         * 结束缩放事件,只有startMove事件通知时才会回调这个事件
+         * 结束缩放事件,只有startScale事件通知时才会回调这个事件
          *
          * @param hasBeenScaled 是否确实进行了缩放
          */
