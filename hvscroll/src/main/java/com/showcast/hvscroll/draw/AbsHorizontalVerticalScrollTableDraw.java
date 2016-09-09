@@ -42,6 +42,8 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
     //the direction for scrolling
     private boolean mIsScrollInHorizontal = false;
     private boolean mIsScrollInVertical = false;
+    private boolean mIsConfirmScrollDirection = false;
+    private boolean mIsScrollX = false;
     //the max width of canvas draws
     private int mCanvasDrawWidth = 0;
     //the max height of canvas draws
@@ -50,8 +52,6 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
     protected Rect mRecycleRect;
     protected Rect mSkipRect;
     protected Point mViewParams;
-    protected Point mCellSize;
-    protected Point mMenuSize;
     protected Point mRecyclePoint;
     private Point mRowPoint;
     private Point mColumnPoint;
@@ -67,13 +67,11 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
         mMsActionHelper = new MoveAndScaleTouchHelper(null, this);
         mClickHelper = new ClickPointComputeHelper();
 
-        mMsActionHelper.setNoticationEvent(this);
+        mMsActionHelper.setNotificationEvent(this);
         mTouchHelper.setIsEnableDoubleClick(false);
         mRecycleRect = new Rect();
         mSkipRect = new Rect();
         mRecyclePoint = new Point();
-        mCellSize = new Point();
-        mMenuSize = new Point();
         mRowPoint = new Point();
         mColumnPoint = new Point();
         mPaint = new Paint();
@@ -161,12 +159,12 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
         if (mMenuParams != null) {
             //draw menu first
             if (mMenuParams.isDrawRowMenuFirst()) {
-                this.drawMenu(mTable, mMenuParams, Constant.MENU_ROW, mRowPoint, offsetX, offsetY, mPaint, canvas);
-                this.drawMenu(mTable, mMenuParams, Constant.MENU_COLUMN, mColumnPoint, offsetX, offsetY, mPaint, canvas);
+                this.drawSingleMenu(mTable, mMenuParams, Constant.MENU_ROW, mRowPoint, offsetX, offsetY, mPaint, canvas);
+                this.drawSingleMenu(mTable, mMenuParams, Constant.MENU_COLUMN, mColumnPoint, offsetX, offsetY, mPaint, canvas);
             } else {
                 //draw column first
-                this.drawMenu(mTable, mMenuParams, Constant.MENU_COLUMN, mColumnPoint, offsetX, offsetY, mPaint, canvas);
-                this.drawMenu(mTable, mMenuParams, Constant.MENU_ROW, mRowPoint, offsetX, offsetY, mPaint, canvas);
+                this.drawSingleMenu(mTable, mMenuParams, Constant.MENU_COLUMN, mColumnPoint, offsetX, offsetY, mPaint, canvas);
+                this.drawSingleMenu(mTable, mMenuParams, Constant.MENU_ROW, mRowPoint, offsetX, offsetY, mPaint, canvas);
             }
         }
         if (mGlobalParams.isDrawCellStroke()) {
@@ -174,14 +172,14 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
                     mColumnPoint.y, mRowPoint.y, offsetX, offsetY, mPaint, canvas);
         }
         //draw cells
-        this.drawCellInTable(mTable, mCellParams, mColumnPoint.x, mRowPoint.x,
+        this.drawTable(mTable, mCellParams, mColumnPoint.x, mRowPoint.x,
                 mColumnPoint.y, mRowPoint.y, offsetX, offsetY, mPaint, canvas);
         //draw mask
         if (mGlobalParams.isDrawMask()) {
             this.drawAnyWidthMask(mMenuParams, mCellParams, mGlobalParams, mColumnPoint.x, mRowPoint.x, offsetX, offsetY, mPaint, canvas);
         }
         //draw frozen columns/rows, to keep the frozen items up of mask.
-        this.drawFrozenCell(mTable, mCellParams, mColumnPoint.x, mRowPoint.x,
+        this.drawFrozenLines(mTable, mCellParams, mColumnPoint.x, mRowPoint.x,
                 mColumnPoint.y, mRowPoint.y, offsetX, offsetY, mPaint, canvas);
     }
 
@@ -197,14 +195,14 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
         }
         //nothing would be calculated when table or cellParams is null.
         if (isNeedToDraw()) {
-            //update the canvas width and height.
-            this.calculateCanvasWidthAndHeight(mTable, mMenuParams, mCellParams);
-            //calculate cell/menu width and height
-            mCellSize = mCellParams.getDrawWidthAndHeight(mCellSize, mViewParams.x, mViewParams.y);
+            mCellParams.computeDrawWidthAndHeight(mViewParams.x, mViewParams.y);
             if (mMenuParams != null) {
-                mMenuSize = mMenuParams.getDrawWidthAndHeight(mMenuSize, mViewParams.x, mViewParams.y);
+                mMenuParams.computeDrawWidthAndHeight(mViewParams.x, mViewParams.y);
             }
-            mClickHelper.setParams(mCellSize.x, mCellSize.y, 0, 0);
+            //update the canvas width and height.
+            this.computeCanvasWidthAndHeight(mTable, mMenuParams, mCellParams);
+            //calculate cell/menu width and height
+            mClickHelper.setParams(mCellParams.getDrawWidth(), mCellParams.getDrawHeight(), 0, 0);
             //reset clip/startDraw position points.
             mColumnPoint.set(0, 0);
             mRowPoint.set(0, 0);
@@ -220,14 +218,14 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
     }
 
     /**
-     * calculate the canvas' width and height.depends on the width and height of menu and cell is fixed.<br/>
+     * calculate the canvas' width and height.depends on the width and height of menu and cell is fixed.<br>
      * 计算界面的宽高.这个在菜单与单元格之间的宽高不变时有效(若可以动态改变则无效)
      *
      * @param table
      * @param menuParams
      * @param cellParams
      */
-    private void calculateCanvasWidthAndHeight(TableEntity table, MenuParams menuParams, CellParams cellParams) {
+    private void computeCanvasWidthAndHeight(TableEntity table, MenuParams menuParams, CellParams cellParams) {
         if (table == null || cellParams == null) {
             mCanvasDrawWidth = 0;
             mCanvasDrawHeight = 0;
@@ -238,19 +236,19 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
         //calculate menu draw width and height.
         if (menuParams != null) {
             if (menuParams.isDrawRowMenu()) {
-                menuHeight = menuParams.getHeight();
-                width = menuParams.getWidth() * table.getMenuCount(Constant.MENU_ROW);
+                menuHeight = menuParams.getDrawHeight();
+                width = menuParams.getDrawWidth() * table.getMenuCount(Constant.MENU_ROW);
             }
             if (menuParams.isDrawColumnMenu()) {
-                menuWidth = menuParams.getWidth();
-                height = menuParams.getHeight() * table.getMenuCount(Constant.MENU_COLUMN);
+                menuWidth = menuParams.getDrawWidth();
+                height = menuParams.getDrawHeight() * table.getMenuCount(Constant.MENU_COLUMN);
             }
             mCanvasDrawWidth = width + menuWidth;
             mCanvasDrawHeight = height + menuHeight;
         }
         //calculate table cells.
-        width = table.getColumnCount() * cellParams.getWidth();
-        height = table.getRowCount() * cellParams.getHeight();
+        width = table.getCellColumnCount() * cellParams.getDrawWidth();
+        height = table.getCellRowCount() * cellParams.getDrawHeight();
         width += menuWidth;
         height += menuHeight;
         mCanvasDrawWidth = mCanvasDrawWidth < width ? width : mCanvasDrawWidth;
@@ -270,13 +268,13 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
      * @param paint
      * @param canvas
      */
-    protected void drawMenu(TableEntity table, @NonNull MenuParams params, @Constant.MenuType int menuType, @NonNull Point outPoint, int drawOffsetX, int drawOffsetY, Paint paint, Canvas canvas) {
+    protected void drawSingleMenu(TableEntity table, @NonNull MenuParams params, @Constant.MenuType int menuType, @NonNull Point outPoint, int drawOffsetX, int drawOffsetY, Paint paint, Canvas canvas) {
         int menuCount, width, height, tempX, tempY;
         boolean isRow;
         //get the menu setting
         MenuParams.MenuSetting setting = params.getSetting(menuType);
-        width = params.getWidth();
-        height = params.getHeight();
+        width = params.getDrawWidth();
+        height = params.getDrawHeight();
         //check if the menu has items to draw
         menuCount = table == null ? 0 : table.getMenuCount(menuType);
         isRow = menuType == Constant.MENU_ROW;
@@ -301,7 +299,7 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
         if (setting.isFrozenY()) {
             drawOffsetY = 0;
         }
-        this.calculateSkipUnseenCell(mSkipRect, width, height, 0, 0, tempX, tempY, drawOffsetX, drawOffsetY);
+        this.computeSkipUnseenCell(mSkipRect, width, height, 0, 0, tempX, tempY, drawOffsetX, drawOffsetY);
         tempX = isRow ? mSkipRect.right : mSkipRect.left;
         tempY = isRow ? mSkipRect.bottom : mSkipRect.top;
         for (int i = tempX; i < tempY; i++) {
@@ -340,35 +338,35 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
         //changed the startDrawPosition if menu need to be frozen.
         outPoint.y = isRow ? outPoint.y + menuCount : outPoint.y;
     }
-    
+
     /**
-     * draw the cell stroke on the background.when the cell set to draw its stroke,this will be covered.<br/>
+     * draw the cell stroke on the background.when the cell set to draw its stroke,this will be covered.<br>
      * 在背景色上绘制界面单元格的划分线.单元格中所有的绘制操作将会覆盖对应区域的界面(不会影响到单元格的绘制)
      *
      * @param table
      * @param params
-     * @param clipStartX
-     * @param clipStartY
-     * @param startDrawX
-     * @param startDrawY
-     * @param canvasOffsetX
-     * @param canvasOffsetY
+     * @param clipStartX    clip the canvas for draw
+     * @param clipStartY    clip the canvas for draw
+     * @param startDrawX    the x position begins to draw
+     * @param startDrawY    the y position begins to draw
+     * @param canvasOffsetX canvas offset x
+     * @param canvasOffsetY canvas offset y
      * @param paint
      * @param canvas
      */
-    protected void drawCellBackgroundStroke(TableEntity table, CellParams params, int clipStartX, int clipStartY, int startDrawX, int startDrawY, int canvasOffsetX, int canvasOffsetY, Paint paint, Canvas canvas) {
+    protected void drawCellBackgroundStroke(TableEntity table, @NonNull CellParams params, int clipStartX, int clipStartY, int startDrawX, int startDrawY, int canvasOffsetX, int canvasOffsetY, Paint paint, Canvas canvas) {
         if (table != null) {
             int clipEndX, clipEndY, rowCount, columnCount, cellWidth, cellHeight, lineX, lineY, drawX, drawY;
-            rowCount = table.getRowCount();
-            columnCount = table.getColumnCount();
-            cellWidth = params.getWidth();
-            cellHeight = params.getHeight();
+            rowCount = table.getCellRowCount();
+            columnCount = table.getCellColumnCount();
+            cellWidth = params.getDrawWidth();
+            cellHeight = params.getDrawHeight();
             //clip the rect to make the show area for drawing
             clipEndX = mViewParams.x < mCanvasDrawWidth ? mViewParams.x : mCanvasDrawWidth;
             clipEndY = mViewParams.y < mCanvasDrawHeight ? mViewParams.y : mCanvasDrawHeight;
             canvas.clipRect(clipStartX, clipStartY, clipEndX, clipEndY);
             //skip all the unseen cells
-            this.calculateSkipUnseenCell(mSkipRect, cellWidth, cellHeight, startDrawX, startDrawY, rowCount, columnCount,
+            this.computeSkipUnseenCell(mSkipRect, cellWidth, cellHeight, startDrawX, startDrawY, rowCount, columnCount,
                     canvasOffsetX, canvasOffsetY);
 
             paint.setColor(mGlobalParams.getStrokeColor());
@@ -394,17 +392,17 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
     }
 
     //draw all cells on the table
-    protected void drawCellInTable(TableEntity table, CellParams params, int clipStartX, int clipStartY, int startDrawX, int startDrawY, int canvasOffsetX, int canvasOffsetY, Paint paint, Canvas canvas) {
+    protected void drawTable(TableEntity table, CellParams params, int clipStartX, int clipStartY, int startDrawX, int startDrawY, int canvasOffsetX, int canvasOffsetY, Paint paint, Canvas canvas) {
         if (table != null) {
             int rowCount, columnCount, cellWidth, cellHeight;
-            rowCount = table.getRowCount();
-            columnCount = table.getColumnCount();
-            cellWidth = params.getWidth();
-            cellHeight = params.getHeight();
+            rowCount = table.getCellRowCount();
+            columnCount = table.getCellColumnCount();
+            cellWidth = params.getDrawWidth();
+            cellHeight = params.getDrawHeight();
             //clip the rect to make the show area for drawing
             canvas.clipRect(clipStartX, clipStartY, mViewParams.x, mViewParams.y);
             //skip all the unseen cells
-            this.calculateSkipUnseenCell(mSkipRect, cellWidth, cellHeight, startDrawX, startDrawY, rowCount, columnCount,
+            this.computeSkipUnseenCell(mSkipRect, cellWidth, cellHeight, startDrawX, startDrawY, rowCount, columnCount,
                     canvasOffsetX, canvasOffsetY);
 
             for (int i = mSkipRect.left; i < mSkipRect.top; i++) {
@@ -422,7 +420,7 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
     }
 
     /**
-     * draw frozen columns or rows.<br/>
+     * draw frozen columns or rows.<br>
      * 用于绘制固定的行和列.实际绘制某一行或列由对应的绘制方法完成,此方法主要是做绘制的判断及控件绘制顺序
      *
      * @param table
@@ -436,64 +434,79 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
      * @param paint
      * @param canvas
      */
-    protected void drawFrozenCell(TableEntity table, CellParams params, int clipStartX, int clipStartY, int startDrawX, int startDrawY, int canvasOffsetX, int canvasOffsetY, Paint paint, Canvas canvas) {
+    protected void drawFrozenLines(TableEntity table, CellParams params, int clipStartX, int clipStartY, int startDrawX, int startDrawY, int canvasOffsetX, int canvasOffsetY, Paint paint, Canvas canvas) {
         if (table != null) {
             //clip the rect to make the show area for drawing
             canvas.clipRect(clipStartX, clipStartY, mViewParams.x, mViewParams.y);
-            //get row and column frozen setting
-            CellParams.LineSetting rowSetting = params.getSetting(Constant.LINE_ROW);
-            CellParams.LineSetting columnSetting = params.getSetting(Constant.LINE_COLUMN);
 
+            //if draw frozen row first
             if (params.isDrawFrozenRowFirst()) {
-                if (rowSetting.getFrozenItemSize() > 0) {
-                    //get all frozen items' index
-                    int[] result = rowSetting.getValueFrozenItems();
-                    for (int i : result) {
-                        this.drawFrozenRow(table, params,
-                                startDrawX, startDrawY, canvasOffsetX, canvasOffsetY,
-                                paint, canvas);
-                    }
-                }
-                //the same as frozen row
-                if (columnSetting.getFrozenItemSize() > 0) {
-                    int[] result = columnSetting.getValueFrozenItems();
-                    for (int i : result) {
-                        this.drawFrozenColumn(table, params,
-                                startDrawX, startDrawY, canvasOffsetX, canvasOffsetY,
-                                paint, canvas);
-                    }
-                }
+                this.drawSingleFrozenLine(mTable, params, Constant.LINE_ROW, startDrawX, startDrawY, canvasOffsetX, canvasOffsetY, paint, canvas);
+                this.drawSingleFrozenLine(mTable, params, Constant.LINE_COLUMN, startDrawX, startDrawY, canvasOffsetX, canvasOffsetY, paint, canvas);
             } else {
-                if (columnSetting.getFrozenItemSize() > 0) {
-                    int[] result = columnSetting.getValueFrozenItems();
-                    for (int i : result) {
-                        this.drawFrozenColumn(table, params,
-                                startDrawX, startDrawY, canvasOffsetX, canvasOffsetY,
-                                paint, canvas);
-                    }
-                }
-                if (rowSetting.getFrozenItemSize() > 0) {
-                    //get all frozen items' index
-                    int[] result = rowSetting.getValueFrozenItems();
-                    for (int i : result) {
-                        this.drawFrozenRow(table, params,
-                                startDrawX, startDrawY, canvasOffsetX, canvasOffsetY,
-                                paint, canvas);
-                    }
-                }
+                this.drawSingleFrozenLine(mTable, params, Constant.LINE_COLUMN, startDrawX, startDrawY, canvasOffsetX, canvasOffsetY, paint, canvas);
+                this.drawSingleFrozenLine(mTable, params, Constant.LINE_ROW, startDrawX, startDrawY, canvasOffsetX, canvasOffsetY, paint, canvas);
             }
-
+            //reset the clip area
             canvas.clipRect(0, 0, mViewParams.x, mViewParams.y);
         }
     }
 
 
+    protected void drawSingleFrozenLine(TableEntity table, CellParams params, @Constant.LineType int lineType, int startDrawX, int startDrawY, int offsetX, int offsetY, Paint paint, Canvas canvas) {
+        int sizeLength, lineCount, offset, rowIndex, columnIndex;
+        boolean isRow;
+        CellParams.LineSetting setting = params.getSetting(lineType);
+        isRow = lineType == Constant.LINE_ROW;
+        sizeLength = isRow ? params.getDrawHeight() : params.getDrawWidth();
+        //the canvas has been clipped, should not clip again
+        //check if the table exists
+        if (table != null) {
+            //check if table has any frozen column
+            if (setting.getFrozenItemSize() > 0) {
+                //get the cell offset length
+                offset = setting.getOffsetDrawLength(sizeLength);
+                lineCount = table.getCellCount(isRow ? Constant.LINE_COLUMN : Constant.LINE_ROW);
+                //update the use data according to line type
+                if (isRow) {
+                    offsetY = 0;
+                    startDrawY += offset;
+                } else {
+                    offsetX = 0;
+                    startDrawX += offset;
+                }
+                //get all the frozen columns or row 's index
+                int[] result = setting.getValueFrozenItems();
+                for (int line : result) {
+                    //traverse all cell at this line(maybe row or column)
+                    for (int i = 0; i < lineCount; i++) {
+                        //update the rowIndex and columnIndex according to line type
+                        if (isRow) {
+                            rowIndex = line;
+                            columnIndex = i;
+                        } else {
+                            rowIndex = i;
+                            columnIndex = line;
+                        }
+                        //get cell
+                        CellEntity cell = table.getCell(rowIndex, columnIndex);
+                        //draw all the cells at this line
+                        this.drawCommonCell(cell, params, false, rowIndex, columnIndex,
+                                offsetX, offsetY,
+                                startDrawX, startDrawY, paint, canvas);
+                    }
+                }
+            }
+        }
+    }
+
     //TODO:将固定行列绘制合并为一个方法进行操作(80%的代码相同)
     //draw frozen column
+    @Deprecated
     protected void drawFrozenColumn(TableEntity table, CellParams params, int startDrawX, int startDrawY, int offsetX, int offsetY, Paint paint, Canvas canvas) {
         int cellWidth;
         CellParams.LineSetting setting = params.getSetting(Constant.LINE_COLUMN);
-        cellWidth = params.getWidth();
+        cellWidth = params.getDrawWidth();
         //the canvas has been clipped, should not clip again
 
         //check if the table exists
@@ -501,7 +514,7 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
             //check if table has any frozen column
             if (setting.getFrozenItemSize() > 0) {
                 int offsetWidth = setting.getOffsetDrawLength(cellWidth);
-                int rowCount = table.getRowCount();
+                int rowCount = table.getCellRowCount();
                 //get all the frozen columns' index
                 int[] result = setting.getValueFrozenItems();
                 for (int line : result) {
@@ -519,10 +532,11 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
     }
 
     //draw frozen row
+    @Deprecated
     protected void drawFrozenRow(TableEntity table, CellParams params, int startDrawX, int startDrawY, int offsetX, int offsetY, Paint paint, Canvas canvas) {
         int cellHeight;
         CellParams.LineSetting setting = params.getSetting(Constant.LINE_ROW);
-        cellHeight = params.getHeight();
+        cellHeight = params.getDrawHeight();
         //the canvas has been clipped, should not clip again
 
         //check if the table exists
@@ -530,7 +544,7 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
             //check if table has any frozen column
             if (setting.getFrozenItemSize() > 0) {
                 int offsetHeight = setting.getOffsetDrawLength(cellHeight);
-                int columnCount = table.getColumnCount();
+                int columnCount = table.getCellColumnCount();
                 //get all the frozen columns' index
                 int[] result = setting.getValueFrozenItems();
                 for (int line : result) {
@@ -548,14 +562,14 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
     }
 
     /**
-     * draw mask with any width which given by globalParams.<br/>
+     * draw mask with any width which given by globalParams.<br>
      * 绘制蒙板界面,界面的相关设置由globalParmas决定
      *
-     * @param menuParams   offer the menu width/height if menu need to be drawn.<br/>
+     * @param menuParams   offer the menu width/height if menu need to be drawn.<br>
      *                     提供菜单的宽高当菜单需要被绘制时.
-     * @param cellParams   offset the cell width/height.it is about the width of mask to draw.<br/>
+     * @param cellParams   offset the cell width/height.it is about the width of mask to draw.<br>
      *                     提供单元格的宽高.这个与最终绘制的蒙板界面宽度有关.
-     * @param globalParams offset the all params about drawing mask.<br/>
+     * @param globalParams offset the all params about drawing mask.<br>
      *                     提供所有与蒙板界面相关的参数.
      * @param clipX
      * @param clipY
@@ -565,14 +579,14 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
      * @param canvas
      */
     protected void drawAnyWidthMask(MenuParams menuParams, @NonNull CellParams cellParams, @NonNull GlobalParams globalParams, int clipX, int clipY, int offsetX, int offsetY, Paint paint, Canvas canvas) {
-        int maskWidth = (int) globalParams.getDrawMaskWidth(cellParams.getWidth());
+        int maskWidth = (int) globalParams.getDrawMaskWidth(cellParams.getDrawWidth());
         if (maskWidth <= 0) {
             return;
         }
 
         int menuWidth, cellWidth, startWidth;
-        menuWidth = (menuParams == null || !menuParams.isDrawColumnMenu()) ? 0 : menuParams.getWidth();
-        cellWidth = cellParams.getWidth();
+        cellWidth = cellParams.getDrawWidth();
+        menuWidth = (menuParams == null || !menuParams.isDrawColumnMenu()) ? 0 : cellWidth;
         startWidth = globalParams.getDrawMaskStartWidth(cellWidth);
 
         int canvasSeenHeight = mCanvasDrawHeight + offsetY;
@@ -612,13 +626,14 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
      */
     protected void drawCommonCell(CellEntity cellOrMenu, @NonNull BaseParams params, boolean isMenu, int whichRow, int whichColumn, int offsetX, int offsetY, int startDrawX, int startDrawY, Paint paint, Canvas canvas) {
         if (cellOrMenu != null && (cellOrMenu.isNeedToDraw(whichRow, whichColumn) || isMenu)) {
-            int width = params.getWidth();
-            int height = params.getHeight();
+            int width, height;
+            width = params.getDrawWidth();
+            height = params.getDrawHeight();
             if (isMenu) {
                 whichRow = cellOrMenu.getRowIndex();
                 whichColumn = cellOrMenu.getColumnIndex();
             }
-            this.calculateCellWidthAndHeight(mRecyclePoint, cellOrMenu, width, height);
+            this.computeCellWidthAndHeight(mRecyclePoint, cellOrMenu, width, height);
             //calculate every cell
             //we mush use cellWidth for unit here
             //every cell's width maybe changed,but we draw cell one by one
@@ -670,7 +685,7 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
      * @param defaultCellWidth  the unit width of cell or menu
      * @param defaultCellHeight the unit height of cell or menu
      */
-    private void calculateCellWidthAndHeight(@NonNull Point outPoint, @NonNull CellEntity cell, int defaultCellWidth, int defaultCellHeight) {
+    private void computeCellWidthAndHeight(@NonNull Point outPoint, @NonNull CellEntity cell, int defaultCellWidth, int defaultCellHeight) {
         int width = cell.getDrawWidth();
         int height = cell.getDrawHeight();
         width = width <= 0 ?
@@ -716,7 +731,7 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
      * @return
      */
     @NonNull
-    private void calculateSkipUnseenCell(@NonNull Rect outRect, int unitWidth, int unitHeight, int startDrawX, int startDrawY, int maxRow, int maxColumn, int offsetWidth, int offsetHeight) {
+    private void computeSkipUnseenCell(@NonNull Rect outRect, int unitWidth, int unitHeight, int startDrawX, int startDrawY, int maxRow, int maxColumn, int offsetWidth, int offsetHeight) {
 
         outRect.right = (Math.abs(offsetWidth) - startDrawX) / unitWidth;
         outRect.left = (Math.abs(offsetHeight) - startDrawY) / unitHeight;
@@ -783,18 +798,22 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
         if (!TextUtils.isEmpty(drawText)) {
             //measure the text width if all char draw out
             float textWidth = mPaint.measureText(drawText);
+            int maxCharLength = 0;
             if (textWidth > maxDrawWidth) {
                 //estimate max char count can be show
-                int maxCharLength = (int) (drawText.length() * (maxDrawWidth / textWidth));
+                maxCharLength = (int) (drawText.length() * (maxDrawWidth / textWidth));
                 //save 3 count for ellipsis
                 if (maxCharLength > 3) {
-                    float drawLength = paint.measureText(drawText, 0, maxCharLength - 3);
-                    canvas.drawText(drawText, 0, maxCharLength - 3, drawX, drawY, paint);
+                    maxCharLength -= 3;
+                    float drawLength = paint.measureText(drawText, 0, maxCharLength);
+                    canvas.drawText(drawText, 0, maxCharLength, drawX, drawY, paint);
                     canvas.drawText("...", drawX + drawLength, drawY, paint);
                     return;
                 }
+            } else {
+                maxCharLength = drawText.length();
             }
-            canvas.drawText(drawText, drawX, drawY, paint);
+            canvas.drawText(drawText, 0, maxCharLength, drawX, drawY, paint);
         }
     }
 
@@ -819,6 +838,18 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
         }
     }
 
+    private void setScrollXEnabled(boolean isScrollXEnabled, boolean isScrollYEnabled) {
+        if (!mIsConfirmScrollDirection) {
+            if (isScrollXEnabled) {
+                mIsConfirmScrollDirection = true;
+                mIsScrollX = true;
+            } else if (isScrollYEnabled) {
+                mIsConfirmScrollDirection = true;
+                mIsScrollX = false;
+            }
+        }
+    }
+
     @Override
     public boolean isCanMovedOnX(PointF moveDistancePointF, PointF newOffsetPointF) {
         //only can move in the positive axis.
@@ -840,7 +871,12 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
         if (newOffsetPointF.x > 0) {
             newOffsetPointF.x = 0;
         }
-        return mIsScrollInHorizontal && newOffsetPointF.x <= 0;
+
+//        Log.i("draw", "move = " + moveDistancePointF.toString());
+//        Log.i("draw", "offset = " + newOffsetPointF.toString());
+        boolean isEnabled = newOffsetPointF.x <= 0 && Math.abs(moveDistancePointF.x) > Math.abs(moveDistancePointF.y);
+        this.setScrollXEnabled(isEnabled, false);
+        return mIsScrollX;
     }
 
     @Override
@@ -862,7 +898,10 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
         if (newOffsetPointF.y > 0) {
             newOffsetPointF.y = 0;
         }
-        return mIsScrollInVertical && newOffsetPointF.y <= 0;
+
+        boolean isEnabled = newOffsetPointF.y <= 0 && Math.abs(moveDistancePointF.x) < Math.abs(moveDistancePointF.y);
+        this.setScrollXEnabled(false, isEnabled);
+        return !mIsScrollX;
     }
 
     @Override
@@ -894,7 +933,10 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
 
     @Override
     public void finishedMove(boolean hasBeenMoved) {
+        mIsScrollInVertical = false;
         mIsScrollInHorizontal = false;
+        mIsConfirmScrollDirection = false;
+        mIsScrollX = false;
     }
 
     @Override
@@ -921,8 +963,8 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
     public void onSingleClickByTime(MotionEvent event) {
         if (isNeedToDraw() && mCellClickListener != null) {
             //TODO:菜单单击无效,不会进行检测与响应...
-            int y = mClickHelper.computeClickYFromFirstLine(event.getX(), mMsActionHelper.getDrawOffsetX(), mMenuSize.x, mTable.getColumnCount());
-            int x = mClickHelper.computeClickXFromFirstLine(event.getY(), mMsActionHelper.getDrawOffsetY(), mMenuSize.y, mTable.getRowCount());
+            int y = mClickHelper.computeClickYFromFirstLine(event.getX(), mMsActionHelper.getDrawOffsetX(), mMenuParams.getDrawWidth(), mTable.getCellColumnCount());
+            int x = mClickHelper.computeClickXFromFirstLine(event.getY(), mMsActionHelper.getDrawOffsetY(), mMenuParams.getDrawHeight(), mTable.getCellRowCount());
             Log.i("tag", "result x/y=" + x + "/" + y);
             mCellClickListener.onCellClick(mTable.getCell(x, y), x, y);
         }
@@ -964,7 +1006,7 @@ public abstract class AbsHorizontalVerticalScrollTableDraw implements IHVScrollT
 
     /**
      * this method will be called before moving.and the start moving position is given.
-     * return the direction which is allowed to move.<br/>
+     * return the direction which is allowed to move.<br>
      * 此方法会在开始移动之前进行回调.返回值决定了可移动的方向.
      *
      * @param mouseDown
