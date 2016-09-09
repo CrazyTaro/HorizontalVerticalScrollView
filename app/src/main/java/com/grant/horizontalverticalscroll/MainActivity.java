@@ -4,7 +4,6 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
-import com.showcast.hvscroll.draw.BaseDrawStyle;
 import com.showcast.hvscroll.draw.IHVScrollTable;
 import com.showcast.hvscroll.entity.CellEntity;
 import com.showcast.hvscroll.entity.TableEntity;
@@ -62,8 +61,7 @@ public class MainActivity extends AppCompatActivity implements IHVScrollTable.On
 
         //menu
         MenuParams menuParams = new MenuParams();
-        menuParams.setHeight(100);
-        menuParams.setWidth(300);
+        menuParams.setWidthAndHeightPercent(0.15f, 0.15f, Constant.STYLE_RELY_ON_PARENT_SIZE);
         menuParams.getDefaultDrawStyle().setBackgroundColor(Color.WHITE);
         menuParams.setIsDrawRowMenu(true);
         menuParams.setIsDrawColumn(true);
@@ -73,14 +71,14 @@ public class MainActivity extends AppCompatActivity implements IHVScrollTable.On
 
         //cell
         CellParams cellParams = new CellParams();
-        cellParams.setHeight(200);
-        cellParams.setWidth(300);
+        cellParams.setWidthAndHeightPercent(0.15f, 0.15f, Constant.STYLE_RELY_ON_PARENT_SIZE);
         cellParams.getDefaultDrawStyle().setBackgroundColor(Color.BLACK);
         cellParams.getDefaultDrawStyle().setStrokeWidth(5);
         cellParams.getDefaultDrawStyle().setTextColor(Color.WHITE);
         cellParams.getDefaultDrawStyle().setStrokeColor(Color.WHITE);
 //        cellParams.getSetting(Constant.LINE_COLUMN).addFrozenItemIndex(0);
 //        cellParams.getSetting(Constant.LINE_ROW).addFrozenItemIndex(2);
+//        cellParams.getSetting(Constant.LINE_ROW).setOffsetLines(1);
 
         //global
         GlobalParams globalParams = new GlobalParams();
@@ -88,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements IHVScrollTable.On
         globalParams.setStrokeWidth(4);
         globalParams.setIsDrawCellStroke(true);
         globalParams.setIsDrawMask(true);
-        globalParams.setMaskWidthPercent(2, 0.8f);
+        globalParams.setMaskWidthPercent(1, 0.8f);
         globalParams.setMaskAlpha(100);
         globalParams.setMaskStartLine(1);
         globalParams.setMaskColor(Color.WHITE);
